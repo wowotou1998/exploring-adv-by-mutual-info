@@ -1,7 +1,7 @@
 #my ignore
+#Checkpoint/
+#results_pdf/
 *.pth
-*.csv
-*.eps
 *.npy
 *.pdf
 *.png
