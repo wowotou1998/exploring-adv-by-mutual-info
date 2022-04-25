@@ -23,7 +23,7 @@ Std_Epoch_Num = 30
 
 def ATK(Random_Start=False):
     global model
-    atk = PGD(model, eps=45 / 255, alpha=10 / 255, steps=5, random_start=Random_Start)
+    atk = PGD(model, eps=45 / 255, alpha=15 / 255, steps=5, random_start=Random_Start)
     return atk
 
 
@@ -83,9 +83,12 @@ def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
     fig = plt.gcf()
     plt.show()
     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
-    fig.savefig('./%s.pdf' % (
-        datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")),
-                )
+    Is_Adv_Training = 'std_train'
+    fig.savefig(
+        './results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+                                                 Is_Adv_Training
+                                                 ))
+
 
 def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
     std, adv = std_estimator, adv_estimator
@@ -193,8 +196,9 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
     if Enable_Show:
         plt.show()
     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
-    fig.savefig('./results_pdf/%s_mutual_info_%s.pdf' % (Is_Adv_Training,
-                                                         datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")),
+    fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+                                                         Is_Adv_Training
+                                                         )
                 )
 
 
@@ -212,7 +216,7 @@ from torchvision.models import *
 from ModelSet import *
 from Models.VGG import *
 
-model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
+model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.Tanh()), 'FC_Sigmoid'
 # model, Model_Name = ModelSet.Alex_1(), 'Alex_1'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
@@ -221,7 +225,7 @@ model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 
-Learning_Rate = 0.1
+Learning_Rate = 0.08
 optimizer = optim.SGD(model.parameters(),
                       lr=Learning_Rate,
                       momentum=0.9,
@@ -263,7 +267,7 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 #                    'features.25',
 #                    'classifier')
 # FC_2
-modules_to_hook = (torch.nn.Tanh,torch.nn.ReLU)
+modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
@@ -277,29 +281,7 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, sh
 test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
 
 
-@torch.no_grad()
-def evaluate_acc(Keep_Clean):
-    atk = ATK(Random_Start=False)
-    model.eval()
-    correct = 0.
-    total = 0.
-    for batch_images, batch_labels in test_loader:
-        labels = batch_labels.to(Device)
-        images = batch_images.to(Device)
-        if not Keep_Clean:
-            # print('Attacking')
-            with torch.enable_grad():
-                images = atk(batch_images, batch_labels)
-        # forward
-        outputs = model(images)
 
-        _, predicted = torch.max(outputs.data, dim=1)
-
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-    acc = correct * 100. / total
-    return acc
 
 
 @torch.no_grad()
@@ -320,10 +302,12 @@ def get_clean_or_adv_image(Keep_Clean):
 
 # 4.1 Standard Accuracy
 @torch.no_grad()
-def mutual_info_calculate(Keep_Clean):
+def acc_and_mutual_info_calculate(Keep_Clean):
     # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
     # a = list[-1]就是最后一个元素
-    import numpy as np
+    correct_N = 0
+    total_N = 0
+
     model.eval()
 
     image_chunk = []
@@ -349,7 +333,13 @@ def mutual_info_calculate(Keep_Clean):
         estimator.clear_activations()
         # register hook
         estimator.do_forward_hook(model)
-        model(images)
+        """
+        计算模型的准确率
+        """
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, dim=1)
+        correct_N += (predicted == labels).sum().item()
+        total_N += labels.size(0)
 
         """
         发现并修改了一个重大bug, 这里每forward一次,caculate_MI 函数计算出的互信息值都直接挂在列表的后面，那么 Forward_Repeat 会成倍放大列表的长度
@@ -384,6 +374,9 @@ def mutual_info_calculate(Keep_Clean):
     estimator.caculate_MI(image_chunk, label_chunk)
     estimator.store_MI()
 
+    acc = correct_N * 100. / total_N
+    return acc
+
 
 # this training function is only for classification task
 def training(Enable_Adv_Training):
@@ -409,10 +402,14 @@ def training(Enable_Adv_Training):
     for epoch_i in range(Std_Epoch_Num):
         train_loss_sum, train_acc_sum, sample_sum = 0.0, 0.0, 0
 
-        # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息
+        # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
         # if (epoch_i + 1) % 3 == 0:
-        mutual_info_calculate(Keep_Clean=True)
-        mutual_info_calculate(Keep_Clean=False)
+
+        epoch_test_clean_acc = acc_and_mutual_info_calculate(Keep_Clean=True)
+        epoch_test_adv_acc = acc_and_mutual_info_calculate(Keep_Clean=False)
+        # 在验证集上的干净样本准确率，对抗样本准确率
+        test_clean_acc.append(epoch_test_clean_acc)
+        test_adv_acc.append(epoch_test_adv_acc)
 
         for batch_images, batch_labels in train_loader:
 
@@ -451,11 +448,6 @@ def training(Enable_Adv_Training):
         # 训练准确率
         epoch_train_acc = (train_acc_sum / sample_sum) * 100.0
         train_acc.append(epoch_train_acc)
-        # 在验证集上的干净样本准确率，对抗样本准确率
-        epoch_test_clean_acc = evaluate_acc(Keep_Clean=True)
-        test_clean_acc.append(epoch_test_clean_acc)
-        epoch_test_adv_acc = evaluate_acc(Keep_Clean=False)
-        test_adv_acc.append(epoch_test_adv_acc)
 
         # print some data
         print('epoch_i[%d], '
@@ -478,9 +470,9 @@ def training(Enable_Adv_Training):
     }
     # plot_performance(analytic_data, Enable_Adv_Training)
     # plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training)
-    plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper,std_estimator.epoch_MI_hM_Y_upper,title='std_upper')
+    plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper, std_estimator.epoch_MI_hM_Y_upper, title='std_upper')
     plot_mutual_info_2(std_estimator.epoch_MI_hM_X_bin, std_estimator.epoch_MI_hM_Y_bin, title='std_bin')
-    plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_upper,adv_estimator.epoch_MI_hM_Y_upper,title='adv_upper')
+    plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_upper, adv_estimator.epoch_MI_hM_Y_upper, title='adv_upper')
     plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_bin, adv_estimator.epoch_MI_hM_Y_bin, title='adv_bin')
 
     return analytic_data
@@ -574,7 +566,7 @@ def mutual_info_calculate(Keep_Clean=True):
         layer_activations_size = len(estimator.layer_activations)
         estimator.clear_activations()
         estimator.cancel_hook()
-        
+
         # 发现并修改了一个重大bug, 这里每forward一次,caculate_MI 函数计算出的互信息值都直接挂在列表的后面，那么 Forward_Repeat 会成倍放大列表的长度
         # 且会混乱每一个 epoch 中的互信息变化情况，Forward_Repeat 一旦超过 epoch_num ，那么每一个 epoch 的曲线就会
 
@@ -598,6 +590,8 @@ def mutual_info_calculate(Keep_Clean=True):
     estimator.epoch_i_MI_hM_Y_bin = (epoch_i_MI_hM_Y_bin_sum / Forward_Repeat).tolist()
     # 存储互信息
     estimator.store_MI()
+
+
 """
-"""
-"""
+
+
