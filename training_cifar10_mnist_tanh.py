@@ -32,25 +32,6 @@ mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1,
 mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
 
 
-#
-# def plot_performance(data, Enable_Adv_Training):
-#     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-#     save_array_dict(data, 'loss_and_acc')
-#     # 想要绘制线条的画需要记号中带有‘-’
-#     fig, axs = plt.subplots(1, 4, figsize=(10, 4))
-#     for idx, (k, v) in enumerate(data.items()):
-#         axs[idx].set_xlabel('epoch')
-#         axs[idx].set_title(str(k))
-#         axs[idx].plot(v, linestyle='-', linewidth=1)
-#     title = 'Adv Training' if Enable_Adv_Training else 'Std Training'
-#     fig.suptitle(title)
-#     fig = plt.gcf()
-#     if Enable_Show:
-#         plt.show()
-#     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
-#     fig.savefig('./results_pdf/%s_performance_%s.pdf' % (Is_Adv_Training,
-#                                                          datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")),
-#                 )
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
@@ -281,9 +262,6 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, sh
 test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
 
 
-
-
-
 @torch.no_grad()
 def get_clean_or_adv_image(Keep_Clean):
     atk = ATK(Random_Start=False)
@@ -300,7 +278,6 @@ def get_clean_or_adv_image(Keep_Clean):
             return adv_images, batch_labels
 
 
-# 4.1 Standard Accuracy
 @torch.no_grad()
 def acc_and_mutual_info_calculate(Keep_Clean):
     # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
@@ -591,7 +568,23 @@ def mutual_info_calculate(Keep_Clean=True):
     # 存储互信息
     estimator.store_MI()
 
+# def plot_performance(data, Enable_Adv_Training):
+#     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+#     save_array_dict(data, 'loss_and_acc')
+#     # 想要绘制线条的画需要记号中带有‘-’
+#     fig, axs = plt.subplots(1, 4, figsize=(10, 4))
+#     for idx, (k, v) in enumerate(data.items()):
+#         axs[idx].set_xlabel('epoch')
+#         axs[idx].set_title(str(k))
+#         axs[idx].plot(v, linestyle='-', linewidth=1)
+#     title = 'Adv Training' if Enable_Adv_Training else 'Std Training'
+#     fig.suptitle(title)
+#     fig = plt.gcf()
+#     if Enable_Show:
+#         plt.show()
+#     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
+#     fig.savefig('./results_pdf/%s_performance_%s.pdf' % (Is_Adv_Training,
+#                                                          datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")),
+#                 )
 
 """
-
-
