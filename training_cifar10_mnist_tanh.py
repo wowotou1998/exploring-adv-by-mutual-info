@@ -18,7 +18,7 @@ Enable_Show = False
 Train_Batch_Size = 128
 Forward_Size = 5000
 Forward_Repeat = 1
-Std_Epoch_Num = 30
+Std_Epoch_Num = 2
 
 
 def ATK(Random_Start=False):
@@ -30,7 +30,7 @@ def ATK(Random_Start=False):
 mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
 mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1, 0.9
 mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
-
+mpl.rcParams['figure.constrained_layout.use'] = True
 
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
@@ -78,7 +78,8 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
                               std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
                               adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
                               adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin
-                              ]), filename='loss_and_mutual_info')
+                              ]),
+                    filename='loss_and_mutual_info')
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     global Forward_Repeat
@@ -92,6 +93,7 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
         c = sm.to_rgba(epoch_i + 1)
         # layers = [i for i in range(1,len(I_TX)+1)]
         std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
+        adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
         axs[0].plot(std_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
@@ -100,7 +102,6 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
-        adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
         axs[2].plot(adv_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
@@ -131,14 +132,14 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
         if epoch_i % 1 == 0:
             # std/adv upper
             axs_plot(axs[0],
-                     std.epoch_MI_hM_X_upper[epoch_i], std.epoch_MI_hM_Y_upper[epoch_i],
-                     adv.epoch_MI_hM_X_upper[epoch_i], adv.epoch_MI_hM_Y_upper[epoch_i],
+                     std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
+                     adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
                      epoch_i
                      )
             # std/adv bin
             axs_plot(axs[1],
-                     std.epoch_MI_hM_X_bin[epoch_i], std.epoch_MI_hM_Y_bin[epoch_i],
-                     adv.epoch_MI_hM_X_bin[epoch_i], adv.epoch_MI_hM_Y_bin[epoch_i],
+                     std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
+                     adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
                      epoch_i
                      )
 
@@ -429,11 +430,11 @@ def training(Enable_Adv_Training):
         'test_adv_acc': test_adv_acc
     }
     # plot_performance(analytic_data, Enable_Adv_Training)
-    # plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training)
-    plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper, std_estimator.epoch_MI_hM_Y_upper, title='std_upper')
-    plot_mutual_info_2(std_estimator.epoch_MI_hM_X_bin, std_estimator.epoch_MI_hM_Y_bin, title='std_bin')
-    plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_upper, adv_estimator.epoch_MI_hM_Y_upper, title='adv_upper')
-    plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_bin, adv_estimator.epoch_MI_hM_Y_bin, title='adv_bin')
+    plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training)
+    # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper, std_estimator.epoch_MI_hM_Y_upper, title='std_upper')
+    # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_bin, std_estimator.epoch_MI_hM_Y_bin, title='std_bin')
+    # plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_upper, adv_estimator.epoch_MI_hM_Y_upper, title='adv_upper')
+    # plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_bin, adv_estimator.epoch_MI_hM_Y_bin, title='adv_bin')
 
     return analytic_data
 
