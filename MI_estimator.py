@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch
 from MINE import calculate_MI_MINE
 from simple_bin import bin_calc_information2
-from pytorch_kde import kde_multivariate_gauss_entropy, entropy_estimator_kl_simple
+from pytorch_kde import kde_multivariate_gauss_entropy, entropy_estimator_kl_simple, entropy_estimator_bd
 
 """
 此处注意，
@@ -196,24 +196,31 @@ class mutual_info_estimator(object):
             # -------- I(T;X), I(T;Y)  upper and lower  --------
             if self.DO_UPPER:
                 # 最后一层输出\hat{y}也可以直接使用KDE来计算互信息, 因为\hat{y}仅仅只是预测值,不是真实的标签y, 自然也可以当成隐藏层来计算互信息
-
+                # -------- I(T;X) lower --------
+                hM_lower = entropy_estimator_bd(layer_i_activations, noise_variance)
+                hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
+                MI_hM_X_lower.append(nats2bits * (hM_lower - hM_given_X))
                 # -------- I(T;X) upper --------
                 hM_upper = entropy_estimator_kl_simple(layer_i_activations, noise_variance)
                 hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 MI_hM_X_upper.append(nats2bits * (hM_upper - hM_given_X))
-                # -------- I(T;X) lower --------
 
-                # -------- I(T;Y) upper --------
+                # -------- I(T;Y) lower -------- # -------- I(T;Y) upper --------
                 hM_given_Y_upper = 0.
+                hM_given_Y_lower = 0.
                 for y_i in range(label_num):
                     """
                     依次选择激活层i中有关于标签j的激活值， 并计算这部分激活值的的互信息
                     """
                     # 获取第i层激活值关于标签i的部分， 使用bool索引
                     activation_i_for_Y_i = layer_i_activations[Y_i_idx[y_i], :]
+
                     hM_given_Y_i_upper = entropy_estimator_kl_simple(activation_i_for_Y_i, noise_variance)
                     hM_given_Y_upper += Y_probs[y_i].item() * hM_given_Y_i_upper
 
+                    hM_given_Y_i_lower = entropy_estimator_bd(activation_i_for_Y_i, noise_variance)
+                    hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
+                MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
                 MI_hM_Y_upper.append(nats2bits * (hM_upper - hM_given_Y_upper))
         # 在计算完所有层的互信息之后，临时存储所有结果
         if self.DO_BIN:
