@@ -87,6 +87,29 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
     title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
+
+    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, epoch_i):
+        c = sm.to_rgba(epoch_i + 1)
+        # layers = [i for i in range(1,len(I_TX)+1)]
+        std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
+        axs[0].plot(std_I_TX_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+        axs[1].plot(std_I_TY_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+        adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+        axs[2].plot(adv_I_TX_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+        axs[3].plot(adv_I_TY_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+
     # fig size, 先列后行
     nrows = 3
     ncols = 4
@@ -104,59 +127,21 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
             # axs[1].grid(True)
 
     # 开始，结束，步长
-    for i in range(Std_Epoch_Num):
-        if i % 1 == 0:
-            c = sm.to_rgba(i + 1)
+    for epoch_i in range(Std_Epoch_Num):
+        if epoch_i % 1 == 0:
+            # std/adv upper
+            axs_plot(axs[0],
+                     std.epoch_MI_hM_X_upper[epoch_i], std.epoch_MI_hM_Y_upper[epoch_i],
+                     adv.epoch_MI_hM_X_upper[epoch_i], adv.epoch_MI_hM_Y_upper[epoch_i],
+                     epoch_i
+                     )
+            # std/adv bin
+            axs_plot(axs[1],
+                     std.epoch_MI_hM_X_bin[epoch_i], std.epoch_MI_hM_Y_bin[epoch_i],
+                     adv.epoch_MI_hM_X_bin[epoch_i], adv.epoch_MI_hM_Y_bin[epoch_i],
+                     epoch_i
+                     )
 
-            # layers = [i for i in range(1,len(I_TX)+1)]
-            # std upper
-            I_TX, I_TY = std.epoch_MI_hM_X_upper[i], std.epoch_MI_hM_Y_upper[i]
-            axs[0][0].plot(I_TX,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            axs[0][1].plot(I_TY,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            # std bin
-            I_TX, I_TY = std.epoch_MI_hM_X_bin[i], std.epoch_MI_hM_Y_bin[i]
-            axs[0][2].plot(I_TX,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            axs[0][3].plot(I_TY,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            # adv upper
-            I_TX, I_TY = adv.epoch_MI_hM_X_upper[i], adv.epoch_MI_hM_Y_upper[i]
-            axs[1][0].plot(I_TX,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            axs[1][1].plot(I_TY,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            # adv bin
-            I_TX, I_TY = adv.epoch_MI_hM_X_bin[i], adv.epoch_MI_hM_Y_bin[i]
-            axs[1][2].plot(I_TX,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
-            axs[1][3].plot(I_TY,
-                           color=c, marker='o',
-                           linestyle='-', linewidth=1,
-                           # zorder=1
-                           )
             # plt.scatter(I_TX, I_TY,
             #             color=c,
             #             linestyle='-', linewidth=0.1,
@@ -345,7 +330,7 @@ def acc_and_mutual_info_calculate(Keep_Clean):
     # 计算存储互信息
     # calculate mutual info
     """
-    这里 layer_activations 是一个 list， list 里的每一个元素时 tesnor (gpu:0)
+    这里 layer_activations 是一个 list, list 里的每一个元素时 tesnor (gpu:0)
     """
     estimator.layer_activations = layer_activation_chunk
     estimator.caculate_MI(image_chunk, label_chunk)
@@ -381,12 +366,10 @@ def training(Enable_Adv_Training):
 
         # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
         # if (epoch_i + 1) % 3 == 0:
-
         epoch_test_clean_acc = acc_and_mutual_info_calculate(Keep_Clean=True)
         epoch_test_adv_acc = acc_and_mutual_info_calculate(Keep_Clean=False)
         # 在验证集上的干净样本准确率，对抗样本准确率
         test_clean_acc.append(epoch_test_clean_acc)
-        test_adv_acc.append(epoch_test_adv_acc)
 
         for batch_images, batch_labels in train_loader:
 
