@@ -32,6 +32,7 @@ mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1,
 mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
 mpl.rcParams['figure.constrained_layout.use'] = True
 
+
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
@@ -89,11 +90,12 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
 
-    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, epoch_i):
+    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, epoch_i, MI_Type):
         c = sm.to_rgba(epoch_i + 1)
         # layers = [i for i in range(1,len(I_TX)+1)]
         std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
         adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+        axs[0].set_title('std_' + MI_Type)
         axs[0].plot(std_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
@@ -102,6 +104,8 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
+
+        axs[2].set_title('adv_' + MI_Type)
         axs[2].plot(adv_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
@@ -134,13 +138,13 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
             axs_plot(axs[0],
                      std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
                      adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
-                     epoch_i
+                     epoch_i, MI_Type='upper'
                      )
             # std/adv bin
             axs_plot(axs[1],
                      std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
                      adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
-                     epoch_i
+                     epoch_i, MI_Type='bin'
                      )
 
             # plt.scatter(I_TX, I_TY,
@@ -371,6 +375,7 @@ def training(Enable_Adv_Training):
         epoch_test_adv_acc = acc_and_mutual_info_calculate(Keep_Clean=False)
         # 在验证集上的干净样本准确率，对抗样本准确率
         test_clean_acc.append(epoch_test_clean_acc)
+        test_adv_acc.append(epoch_test_adv_acc)
 
         for batch_images, batch_labels in train_loader:
 
@@ -425,7 +430,6 @@ def training(Enable_Adv_Training):
     analytic_data = {
         'train_clean_loss': train_clean_loss,
         'train_accuracy': train_acc,
-
         'test_clean_acc': test_clean_acc,
         'test_adv_acc': test_adv_acc
     }

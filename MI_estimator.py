@@ -18,14 +18,19 @@ class mutual_info_estimator(object):
     def __init__(self, modules_to_hook, By_Layer_Name=False):
         self.By_Layer_Name = By_Layer_Name
 
+        self.DO_LOWER = True
         self.DO_UPPER = True
         self.DO_BIN = True
+
         self.DO_MINE = False
 
         self.modules_to_hook = modules_to_hook
         self.layer_names = []
         self.layer_activations = []
         self.handle_list = []
+
+        self.epoch_MI_hM_X_lower = []
+        self.epoch_MI_hM_Y_lower = []
 
         self.epoch_MI_hM_X_upper = []
         self.epoch_MI_hM_Y_upper = []
@@ -37,6 +42,9 @@ class mutual_info_estimator(object):
         # self.epoch_MI_hM_Y_mine = []
 
         # temp
+        self.epoch_i_MI_hM_X_lower = []
+        self.epoch_i_MI_hM_Y_lower = []
+
         self.epoch_i_MI_hM_X_upper = []
         self.epoch_i_MI_hM_Y_upper = []
 
@@ -56,11 +64,18 @@ class mutual_info_estimator(object):
         self.cancel_hook()
         self.clear_activations()
 
+        self.epoch_MI_hM_X_lower.clear()
+        self.epoch_MI_hM_Y_lower.clear()
+
         self.epoch_MI_hM_X_upper.clear()
         self.epoch_MI_hM_Y_upper.clear()
 
         self.epoch_MI_hM_X_bin.clear()
         self.epoch_MI_hM_Y_bin.clear()
+
+        # temp variable
+        self.epoch_i_MI_hM_X_lower.clear()
+        self.epoch_i_MI_hM_Y_lower.clear()
 
         self.epoch_i_MI_hM_X_upper.clear()
         self.epoch_i_MI_hM_Y_upper.clear()
@@ -118,6 +133,10 @@ class mutual_info_estimator(object):
         layer_activations = self.layer_activations
         print("---> caculate_MI, layer activations size[%d],sample num[%d] <---" % (len(layer_activations),
                                                                                     layer_activations[0].size(0)))
+
+        MI_hM_X_lower = []
+        MI_hM_Y_lower = []
+
         MI_hM_X_upper = []
         MI_hM_Y_upper = []
 
@@ -174,14 +193,15 @@ class mutual_info_estimator(object):
                 MI_hM_X_bin.append(nats2bits * MI_hM_X_bin_layer_i)
                 MI_hM_Y_bin.append(nats2bits * MI_hM_Y_bin_layer_i)
 
-            # -------- I(T;X), I(T;Y)  upper --------
+            # -------- I(T;X), I(T;Y)  upper and lower  --------
             if self.DO_UPPER:
-                # 最后一层输出\hat{y}也可以直接使用KDE来计算互信息,
-                # 因为\hat{y}仅仅只是预测值,不是真实的标签y, 自然也可以当成隐藏层来计算互信息
+                # 最后一层输出\hat{y}也可以直接使用KDE来计算互信息, 因为\hat{y}仅仅只是预测值,不是真实的标签y, 自然也可以当成隐藏层来计算互信息
+
                 # -------- I(T;X) upper --------
                 hM_upper = entropy_estimator_kl_simple(layer_i_activations, noise_variance)
                 hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 MI_hM_X_upper.append(nats2bits * (hM_upper - hM_given_X))
+                # -------- I(T;X) lower --------
 
                 # -------- I(T;Y) upper --------
                 hM_given_Y_upper = 0.
