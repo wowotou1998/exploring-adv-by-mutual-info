@@ -22,7 +22,7 @@ class mutual_info_estimator(object):
         self.DO_UPPER = True
         self.DO_BIN = True
 
-        self.DO_MINE = False
+        # self.DO_MINE = False
 
         self.modules_to_hook = modules_to_hook
         self.layer_names = []
@@ -143,8 +143,8 @@ class mutual_info_estimator(object):
         MI_hM_X_bin = []
         MI_hM_Y_bin = []
 
-        MI_hM_X_mine = []
-        MI_hM_Y_mine = []
+        # MI_hM_X_mine = []
+        # MI_hM_Y_mine = []
 
         label_num = 10
         noise_variance = 0.1
@@ -171,11 +171,11 @@ class mutual_info_estimator(object):
             """
             实践证明， MINE的效果非常不理想，超参数， 神经网络的设置是一个让人很头疼的问题
             """
-            if self.DO_MINE:
-                MI_hM_X_mine_i = calculate_MI_MINE(layer_i_activations, X)
-                MI_hM_Y_mine_i = calculate_MI_MINE(layer_i_activations, Y)
-                MI_hM_X_mine.append(nats2bits * MI_hM_X_mine_i)
-                MI_hM_Y_mine.append(nats2bits * MI_hM_Y_mine_i)
+            # if self.DO_MINE:
+            #     MI_hM_X_mine_i = calculate_MI_MINE(layer_i_activations, X)
+            #     MI_hM_Y_mine_i = calculate_MI_MINE(layer_i_activations, Y)
+            #     MI_hM_X_mine.append(nats2bits * MI_hM_X_mine_i)
+            #     MI_hM_Y_mine.append(nats2bits * MI_hM_Y_mine_i)
 
             # -------- I(T;X), I(T;Y)  binning --------
             if self.DO_BIN:
@@ -196,13 +196,13 @@ class mutual_info_estimator(object):
             # -------- I(T;X), I(T;Y)  upper and lower  --------
             if self.DO_UPPER or self.DO_LOWER:
                 # 最后一层输出\hat{y}也可以直接使用KDE来计算互信息, 因为\hat{y}仅仅只是预测值,不是真实的标签y, 自然也可以当成隐藏层来计算互信息
+                hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 # -------- I(T;X) lower --------
                 hM_lower = entropy_estimator_bd(layer_i_activations, noise_variance)
-                hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 MI_hM_X_lower.append(nats2bits * (hM_lower - hM_given_X))
+
                 # -------- I(T;X) upper --------
                 hM_upper = entropy_estimator_kl_simple(layer_i_activations, noise_variance)
-                hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 MI_hM_X_upper.append(nats2bits * (hM_upper - hM_given_X))
 
                 # -------- I(T;Y) lower -------- # -------- I(T;Y) upper --------
@@ -229,6 +229,9 @@ class mutual_info_estimator(object):
         if self.DO_UPPER:
             self.epoch_i_MI_hM_X_upper = MI_hM_X_upper
             self.epoch_i_MI_hM_Y_upper = MI_hM_Y_upper
+        if self.DO_LOWER:
+            self.epoch_i_MI_hM_X_lower = MI_hM_X_lower
+            self.epoch_i_MI_hM_Y_lower = MI_hM_Y_lower
         # if self.DO_MINE:
         #     self.epoch_i_MI_hM_X_mine = MI_hM_X_mine
         #     self.epoch_i_MI_hM_Y_mine = MI_hM_Y_mine
@@ -240,3 +243,6 @@ class mutual_info_estimator(object):
         if self.DO_UPPER:
             self.epoch_MI_hM_X_upper.append(self.epoch_i_MI_hM_X_upper)
             self.epoch_MI_hM_Y_upper.append(self.epoch_i_MI_hM_Y_upper)
+        if self.DO_LOWER:
+            self.epoch_MI_hM_X_lower.append(self.epoch_i_MI_hM_X_lower)
+            self.epoch_MI_hM_Y_lower.append(self.epoch_i_MI_hM_Y_lower)
