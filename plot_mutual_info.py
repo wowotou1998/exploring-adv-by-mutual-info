@@ -60,7 +60,7 @@ def plot_mutual_info(Enable_Adv_Training):
         # layers = [i for i in range(1,len(I_TX)+1)]
         std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
         adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
-        axs[0].set_title('std_' + MI_Type)
+        axs[0].set_title(MI_Type)
         axs[0].plot(Layer_Name, std_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
@@ -79,7 +79,7 @@ def plot_mutual_info(Enable_Adv_Training):
                     color=c, marker='^',
                     linestyle='--', linewidth=1,
                     )
-        axs[0].legend(line_legends, ['std', 'adv'])
+        axs[1].legend(line_legends, ['std', 'adv'])
 
         # axs[2].set_title('adv_' + MI_Type)
         # axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
@@ -92,7 +92,7 @@ def plot_mutual_info(Enable_Adv_Training):
         #             )
 
     # fig size, 先列后行
-    nrows = 3
+    nrows = 4
     ncols = 4
     fig, axs = plt.subplots(nrows, ncols, figsize=(15, 8), )
     for i in range(nrows - 1):
@@ -116,8 +116,13 @@ def plot_mutual_info(Enable_Adv_Training):
                      adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
                      epoch_i, MI_Type='upper'
                      )
-            # std/adv bin
             axs_plot(axs[1],
+                     std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
+                     adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
+                     epoch_i, MI_Type='lower'
+                     )
+            # std/adv bin
+            axs_plot(axs[2],
                      std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
                      adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
                      epoch_i, MI_Type='bin'

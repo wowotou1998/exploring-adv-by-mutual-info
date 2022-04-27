@@ -23,7 +23,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 5000
 Forward_Repeat = 1
-Std_Epoch_Num = 2
+Std_Epoch_Num = 4
 
 
 # ! /usr/local/env python
