@@ -12,6 +12,7 @@ from MI_estimator import mutual_info_estimator
 from utils import *
 from torchattacks import PGD
 import pickle
+
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
 
 Enable_Show = True
@@ -19,6 +20,7 @@ Train_Batch_Size = 128
 Forward_Size = 5000
 Forward_Repeat = 1
 Std_Epoch_Num = 2
+
 
 # ! /usr/local/env python
 # -*- coding=utf-8 -*-
@@ -91,12 +93,14 @@ def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
 
 
 def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
+    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     std, adv = std_estimator, adv_estimator
-    with open('./Checkpoint/loss_and_acc.pkl', 'wb') as f:
+
+    with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(analytic_data, f)
-    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'wb') as f:
+    with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(std, f)
-    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'wb') as f:
+    with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(adv, f)
 
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
@@ -107,7 +111,7 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     global Forward_Repeat
     global Forward_Size
-    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+
     title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )

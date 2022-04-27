@@ -11,12 +11,13 @@ Forward_Repeat, Forward_Size = 1, 2
 
 
 def plot_mutual_info(Enable_Adv_Training):
+    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     # std, adv = None, None
-    with open('./Checkpoint/loss_and_acc.pkl', 'rb') as f:
+    with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'rb') as f:
         analytic_data = pickle.load(f)
-    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'rb') as f:
+    with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
         std = pickle.load(f)
-    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'rb') as f:
+    with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
         adv = pickle.load(f)
 
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
@@ -31,7 +32,7 @@ def plot_mutual_info(Enable_Adv_Training):
     Model_Name = 'fc'
     Activation_F = 'relu'
     Learning_Rate = 0.08
-    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+
     title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
