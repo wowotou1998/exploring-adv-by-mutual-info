@@ -51,9 +51,6 @@ def ATK(Random_Start=False):
     return atk
 
 
-
-
-
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
