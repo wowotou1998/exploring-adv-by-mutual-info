@@ -14,6 +14,10 @@ from torchattacks import PGD
 import pickle
 
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+# mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
+# mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1, 0.9
+# mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
+mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
@@ -47,10 +51,7 @@ def ATK(Random_Start=False):
     return atk
 
 
-# mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
-# mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1, 0.9
-# mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
-mpl.rcParams['figure.constrained_layout.use'] = True
+
 
 
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):

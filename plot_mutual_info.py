@@ -5,9 +5,27 @@ import datetime
 from utils import *
 import pickle
 from MI_estimator import mutual_info_estimator
+import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
 
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+mpl.rcParams['figure.constrained_layout.use'] = True
+
 Forward_Repeat, Forward_Size = 1, 2
+line_styles = ['-', ':']
+labels = ['std', 'adv']  # legend标签列表，上面的color即是颜色列表
+
+# 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
+# patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
+
+
+line_legends = [Line2D([0], [0], color='red', linewidth=1, linestyle='-', marker='o'),
+                Line2D([0], [0], color='red', linewidth=1, linestyle='--', marker='^')]
+
+
+# fig, ax = plt.subplots()
+# lines = ax.plot(data)
+# ax.legend(custom_lines, ['Cold', 'Medium', 'Hot'])
 
 
 def plot_mutual_info(Enable_Adv_Training):
@@ -17,7 +35,7 @@ def plot_mutual_info(Enable_Adv_Training):
         analytic_data = pickle.load(f)
     with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
         std = pickle.load(f)
-    with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
+    with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'rb') as f:
         adv = pickle.load(f)
 
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
@@ -47,20 +65,31 @@ def plot_mutual_info(Enable_Adv_Training):
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
+        axs[0].plot(Layer_Name, adv_I_TX_epoch_i,
+                    color=c, marker='^',
+                    linestyle='--', linewidth=1,
+                    )
+        axs[0].legend(line_legends, ['std', 'adv'])
+
         axs[1].plot(Layer_Name, std_I_TY_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
+        axs[1].plot(Layer_Name, adv_I_TY_epoch_i,
+                    color=c, marker='^',
+                    linestyle='--', linewidth=1,
+                    )
+        axs[0].legend(line_legends, ['std', 'adv'])
 
-        axs[2].set_title('adv_' + MI_Type)
-        axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
-                    color=c, marker='o',
-                    linestyle='-', linewidth=1,
-                    )
-        axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
-                    color=c, marker='o',
-                    linestyle='-', linewidth=1,
-                    )
+        # axs[2].set_title('adv_' + MI_Type)
+        # axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
+        #             color=c, marker='o',
+        #             linestyle='-', linewidth=1,
+        #             )
+        # axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
+        #             color=c, marker='o',
+        #             linestyle='-', linewidth=1,
+        #             )
 
     # fig size, 先列后行
     nrows = 3
@@ -114,10 +143,10 @@ def plot_mutual_info(Enable_Adv_Training):
     # if Enable_Show:
     plt.show()
     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
-    fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
-                                                         Is_Adv_Training
-                                                         )
-                )
+    # fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+    #                                                      Is_Adv_Training
+    #                                                      )
+    #             )
 
 
-plot_mutual_info(Enable_Adv_Training='True')
+plot_mutual_info(Enable_Adv_Training=False)
