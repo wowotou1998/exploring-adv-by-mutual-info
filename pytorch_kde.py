@@ -22,9 +22,6 @@ def calculate_dists_matrix(x):
     return dists
 
 
-
-
-
 def entropy_estimator_kl_simple(x, var):
     # 这个值的计算结果和上式得出的结果一致, 可以说是上式entropy_estimator_kl的简化版本
     # KL-based upper bound on entropy of mixture of Gaussians with covariance matrix var * I
@@ -37,7 +34,7 @@ def entropy_estimator_kl_simple(x, var):
     const = (dims / 2.0) * np.log(2 * np.pi * var)
     log_sum_exp = torch.logsumexp(-dists2, dim=1)
     h = torch.mean(log_sum_exp)
-    result = dims / 2 + const - h.item() + np.log(N)
+    result = dims / 2 + const + np.log(N) - h.item()
     return result
 
 

@@ -194,7 +194,7 @@ class mutual_info_estimator(object):
                 MI_hM_Y_bin.append(nats2bits * MI_hM_Y_bin_layer_i)
 
             # -------- I(T;X), I(T;Y)  upper and lower  --------
-            if self.DO_UPPER:
+            if self.DO_UPPER or self.DO_LOWER:
                 # 最后一层输出\hat{y}也可以直接使用KDE来计算互信息, 因为\hat{y}仅仅只是预测值,不是真实的标签y, 自然也可以当成隐藏层来计算互信息
                 # -------- I(T;X) lower --------
                 hM_lower = entropy_estimator_bd(layer_i_activations, noise_variance)
