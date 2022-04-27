@@ -1,0 +1,122 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from pylab import mpl
+import datetime
+from utils import *
+import pickle
+from MI_estimator import mutual_info_estimator
+
+mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+Forward_Repeat, Forward_Size = 1, 2
+
+
+def plot_mutual_info(Enable_Adv_Training):
+    # std, adv = None, None
+    with open('./Checkpoint/loss_and_acc.pkl', 'rb') as f:
+        analytic_data = pickle.load(f)
+    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'rb') as f:
+        std = pickle.load(f)
+    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'rb') as f:
+        adv = pickle.load(f)
+
+    Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
+    Layer_Num = len(std.epoch_MI_hM_X_upper[0])
+    Layer_Name = [str(i) for i in range(Layer_Num)]
+
+    # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    global Forward_Repeat
+    global Forward_Size
+
+    Model_Name = 'fc'
+    Activation_F = 'relu'
+    Learning_Rate = 0.08
+    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+    title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
+        Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
+    )
+
+    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, epoch_i, MI_Type):
+        c = sm.to_rgba(epoch_i + 1)
+        # layers = [i for i in range(1,len(I_TX)+1)]
+        std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
+        adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+        axs[0].set_title('std_' + MI_Type)
+        axs[0].plot(Layer_Name, std_I_TX_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+        axs[1].plot(Layer_Name, std_I_TY_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+
+        axs[2].set_title('adv_' + MI_Type)
+        axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+        axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
+                    color=c, marker='o',
+                    linestyle='-', linewidth=1,
+                    )
+
+    # fig size, 先列后行
+    nrows = 3
+    ncols = 4
+    fig, axs = plt.subplots(nrows, ncols, figsize=(15, 8), )
+    for i in range(nrows - 1):
+        for j in range(ncols):
+            # axs[0].set_xlim(0, 2)
+            if j % 2 == 0:
+                axs[i][j].set_xlabel('layers')
+                axs[i][j].set_ylabel('I(T;X)')
+            # axs[0].grid(True)
+            else:
+                axs[i][j].set_xlabel('layers')
+                axs[i][j].set_ylabel('I(T;Y)')
+            # axs[1].grid(True)
+
+    # 开始，结束，步长
+    for epoch_i in range(Std_Epoch_Num):
+        if epoch_i % 1 == 0:
+            # std/adv upper
+            axs_plot(axs[0],
+                     std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
+                     adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
+                     epoch_i, MI_Type='upper'
+                     )
+            # std/adv bin
+            axs_plot(axs[1],
+                     std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
+                     adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
+                     epoch_i, MI_Type='bin'
+                     )
+
+            # plt.scatter(I_TX, I_TY,
+            #             color=c,
+            #             linestyle='-', linewidth=0.1,
+            #             zorder=2
+            #             )
+
+    for idx, (k, v) in enumerate(analytic_data.items()):
+        axs[nrows - 1][idx].set_xlabel('epochs')
+        axs[nrows - 1][idx].set_title(str(k))
+        axs[nrows - 1][idx].plot(v, linestyle='-', linewidth=1)
+    # plt.scatter(epoch_MI_hM_X_upper[0], epoch_MI_hM_Y_upper[0])
+    # plt.legend()
+
+    fig.suptitle(title)
+    fig.colorbar(sm, ax=axs, label='Epoch')
+
+    fig = plt.gcf()
+    # if Enable_Show:
+    plt.show()
+    # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
+    fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+                                                         Is_Adv_Training
+                                                         )
+                )
+
+
+plot_mutual_info(Enable_Adv_Training='True')

@@ -11,14 +11,32 @@ import datetime
 from MI_estimator import mutual_info_estimator
 from utils import *
 from torchattacks import PGD
-
+import pickle
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
 
-Enable_Show = False
+Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 5000
 Forward_Repeat = 1
 Std_Epoch_Num = 2
+
+# ! /usr/local/env python
+# -*- coding=utf-8 -*-
+
+# if __name__ == "__main__":
+#     import pickle
+#
+#     # 序列化到文件
+#     obj = 123, "abcdedf", ["ac", 123], {"key": "value", "key1": "value1"}
+#     print(obj)
+#     # 输出：(123, abcdedf, [ac, 123], {key1: value1, key: value})
+#     # r 读写权限 r b 读写到二进制文件
+#     f = open(r"d:\Anaconda\envs\my_env\a.txt", 'wb')
+#     pickle.dump(obj, f)
+#     f.close()
+#     f = open(r"d:\Anaconda\envs\my_env\a.txt", 'rb')
+#     print(pickle.load(f))
+#     # 输出：(123, abcdedf, [ac, 123], {key1: value1, key: value})
 
 
 def ATK(Random_Start=False):
@@ -27,9 +45,9 @@ def ATK(Random_Start=False):
     return atk
 
 
-mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
-mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1, 0.9
-mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
+# mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
+# mpl.rcParams["figure.subplot.bottom"], mpl.rcParams["figure.subplot.top"] = 0.1, 0.9
+# mpl.rcParams["figure.subplot.wspace"], mpl.rcParams["figure.subplot.hspace"] = 0.2, 0.4
 mpl.rcParams['figure.constrained_layout.use'] = True
 
 
@@ -74,13 +92,17 @@ def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
 
 def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
     std, adv = std_estimator, adv_estimator
-    save_array_dict(analytic_data, 'loss_and_acc')
-    save_array_dict(np.array([std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
-                              std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
-                              adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
-                              adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin
-                              ]),
-                    filename='loss_and_mutual_info')
+    with open('./Checkpoint/loss_and_acc.pkl', 'wb') as f:
+        pickle.dump(analytic_data, f)
+    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'wb') as f:
+        pickle.dump(std, f)
+    with open('./Checkpoint/loss_and_mutual_info_std.pkl', 'wb') as f:
+        pickle.dump(adv, f)
+
+    Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
+    Layer_Num = len(std.epoch_MI_hM_X_upper[0])
+    Layer_Name = [str(i) for i in range(Layer_Num)]
+
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     global Forward_Repeat
@@ -96,21 +118,21 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
         std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
         adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
         axs[0].set_title('std_' + MI_Type)
-        axs[0].plot(std_I_TX_epoch_i,
+        axs[0].plot(Layer_Name, std_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
-        axs[1].plot(std_I_TY_epoch_i,
+        axs[1].plot(Layer_Name, std_I_TY_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
 
         axs[2].set_title('adv_' + MI_Type)
-        axs[2].plot(adv_I_TX_epoch_i,
+        axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
-        axs[3].plot(adv_I_TY_epoch_i,
+        axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
