@@ -18,9 +18,9 @@ labels = ['std', 'adv']  # legend标签列表，上面的color即是颜色列表
 # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
 # patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
 
-
-line_legends = [Line2D([0], [0], color='red', linewidth=1, linestyle='-', marker='o'),
-                Line2D([0], [0], color='red', linewidth=1, linestyle='--', marker='^')]
+# color = 'purple' or 'orange'
+line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
+                Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
 
 
 # fig, ax = plt.subplots()
@@ -61,25 +61,26 @@ def plot_mutual_info(Enable_Adv_Training):
         std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
         adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
         axs[0].set_title(MI_Type)
+        axs[0].legend(line_legends, ['std', 'adv'])
+        axs[1].legend(line_legends, ['std', 'adv'])
+        
         axs[0].plot(Layer_Name, std_I_TX_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
-        axs[0].plot(Layer_Name, adv_I_TX_epoch_i,
+        axs[1].plot(Layer_Name, adv_I_TX_epoch_i,
                     color=c, marker='^',
                     linestyle='--', linewidth=1,
                     )
-        axs[0].legend(line_legends, ['std', 'adv'])
 
-        axs[1].plot(Layer_Name, std_I_TY_epoch_i,
+        axs[2].plot(Layer_Name, std_I_TY_epoch_i,
                     color=c, marker='o',
                     linestyle='-', linewidth=1,
                     )
-        axs[1].plot(Layer_Name, adv_I_TY_epoch_i,
+        axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
                     color=c, marker='^',
                     linestyle='--', linewidth=1,
                     )
-        axs[1].legend(line_legends, ['std', 'adv'])
 
         # axs[2].set_title('adv_' + MI_Type)
         # axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
@@ -94,11 +95,11 @@ def plot_mutual_info(Enable_Adv_Training):
     # fig size, 先列后行
     nrows = 4
     ncols = 4
-    fig, axs = plt.subplots(nrows, ncols, figsize=(10, 15), )
+    fig, axs = plt.subplots(nrows, ncols, figsize=(15, 15), )
     for i in range(nrows - 1):
         for j in range(ncols):
             # axs[0].set_xlim(0, 2)
-            if j % 2 == 0:
+            if j < 2:
                 axs[i][j].set_xlabel('layers')
                 axs[i][j].set_ylabel('I(T;X)')
             # axs[0].grid(True)
@@ -144,14 +145,16 @@ def plot_mutual_info(Enable_Adv_Training):
     fig.suptitle(title)
     fig.colorbar(sm, ax=axs, label='Epoch')
 
-    fig = plt.gcf()
+    # fig = plt.gcf()
     # if Enable_Show:
-    plt.show()
+    # plt.show()
     # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
     # fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
     #                                                      Is_Adv_Training
     #                                                      )
     #             )
+    fig.savefig('123.pdf')
+    print("Work has done!")
 
 
 plot_mutual_info(Enable_Adv_Training=False)
