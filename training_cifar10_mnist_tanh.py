@@ -21,9 +21,9 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
-Forward_Size = 5000
+Forward_Size = 7000
 Forward_Repeat = 1
-Std_Epoch_Num = 4
+Std_Epoch_Num = 20
 
 
 # ! /usr/local/env python
@@ -100,6 +100,7 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
         pickle.dump(std, f)
     with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(adv, f)
+    return
 
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
@@ -220,11 +221,11 @@ model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.Tanh()), 'FC_Sigmoid'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 
-Learning_Rate = 0.08
+Learning_Rate = 0.01
 optimizer = optim.SGD(model.parameters(),
                       lr=Learning_Rate,
                       momentum=0.9,
-                      weight_decay=2e-4
+                      # weight_decay=2e-4
                       )
 
 milestones = [100, 200]
@@ -453,7 +454,7 @@ def training(Enable_Adv_Training):
 
     analytic_data = {
         'train_clean_loss': train_clean_loss,
-        'train_accuracy': train_acc,
+        'train_acc': train_acc,
         'test_clean_acc': test_clean_acc,
         'test_adv_acc': test_adv_acc
     }

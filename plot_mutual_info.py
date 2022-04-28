@@ -94,7 +94,7 @@ def plot_mutual_info(Enable_Adv_Training):
     # fig size, 先列后行
     nrows = 4
     ncols = 4
-    fig, axs = plt.subplots(nrows, ncols, figsize=(15, 8), )
+    fig, axs = plt.subplots(nrows, ncols, figsize=(10, 15), )
     for i in range(nrows - 1):
         for j in range(ncols):
             # axs[0].set_xlim(0, 2)
