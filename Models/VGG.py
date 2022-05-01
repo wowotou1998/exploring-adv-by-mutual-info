@@ -40,6 +40,7 @@ class VGG(nn.Module):
 
 def test():
     net = VGG('VGG11')
+    print(net)
     x = torch.randn(2,3,32,32)
     y = net(x)
     print(y.size())

@@ -22,7 +22,7 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 500
-Forward_Repeat = 6
+Forward_Repeat = 10
 Std_Epoch_Num = 3
 
 
@@ -101,7 +101,7 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
     with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(adv, f)
     return
-
+    # 直接返回， 不进行下面的代码
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
     Layer_Name = [str(i) for i in range(Layer_Num)]
@@ -199,8 +199,8 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
 
 data_tf = transforms.Compose([
-    # transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
-    # transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
+    transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
 ])
 
@@ -215,9 +215,9 @@ from Models.VGG import *
 # model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
 # model, Model_Name = ModelSet.Alex_1(), 'Alex_1'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-# model, Model_Name = VGG('VGG11'), 'VGG11'
-model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
-model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
+model, Model_Name = VGG('VGG11'), 'VGG11'
+# model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+# model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 
@@ -230,13 +230,13 @@ optimizer = optim.SGD(model.parameters(),
 
 milestones = [100, 200]
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
-# Res18
-modules_to_hook = ('conv1',
-                   'layer1.1.conv2',
-                   'layer2.1.conv2',
-                   'layer3.1.conv2',
-                   'layer4.1.conv2',
-                   'fc')
+# # Res18
+# modules_to_hook = ('conv1',
+#                    'layer1.1.conv2',
+#                    'layer2.1.conv2',
+#                    'layer3.1.conv2',
+#                    'layer4.1.conv2',
+#                    'fc')
 # Res34
 # modules_to_hook = ('conv1',
 #                    'layer1.2.conv2',
@@ -257,11 +257,12 @@ modules_to_hook = ('conv1',
 #                    'fc2',
 #                    'fc3')
 # VGG11
-# modules_to_hook = ('features.0',
-#                    'features.8',
-#                    'features.18',
-#                    'features.25',
-#                    'classifier')
+modules_to_hook = ('features.0',
+                   'features.7',
+                   'features.14',
+                   'features.21',
+                   'features.28',
+                   'classifier')
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
