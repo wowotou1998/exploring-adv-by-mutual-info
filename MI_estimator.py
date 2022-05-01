@@ -16,7 +16,8 @@ layer_activations 可能会包含 nn.sequential 中的子模块， 可能实际 
 
 class mutual_info_estimator(object):
     def __init__(self, modules_to_hook, By_Layer_Name=False):
-        self.By_Layer_Name = By_Layer_Name
+        # 根据modules_to_hook中元素的类型是不是字符串对象来判断
+        self.By_Layer_Name = isinstance(modules_to_hook[0], str)
 
         self.DO_LOWER = True
         self.DO_UPPER = True

@@ -173,7 +173,7 @@ from Models.VGG import *
 # model, Model_Name = ModelSet.Alex_1(), 'Alex_1'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
-model, Model_Name = FC_2(Activation_F=torch.nn.Sigmoid()), 'FC_2'
+model, Model_Name = FC_2(Activation_F=torch.nn.ReLU()), 'FC_2'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 

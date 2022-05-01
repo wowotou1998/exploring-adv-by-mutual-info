@@ -21,9 +21,9 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
-Forward_Size = 7000
-Forward_Repeat = 1
-Std_Epoch_Num = 20
+Forward_Size = 500
+Forward_Repeat = 6
+Std_Epoch_Num = 3
 
 
 # ! /usr/local/env python
@@ -212,12 +212,12 @@ from torchvision.models import *
 from ModelSet import *
 from Models.VGG import *
 
-model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.Tanh()), 'FC_Sigmoid'
+# model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
 # model, Model_Name = ModelSet.Alex_1(), 'Alex_1'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
-# model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
-# model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
+model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 
@@ -231,12 +231,12 @@ optimizer = optim.SGD(model.parameters(),
 milestones = [100, 200]
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 # Res18
-# modules_to_hook = ('conv1',
-#                    'layer1.1.conv2',
-#                    'layer2.1.conv2',
-#                    'layer3.1.conv2',
-#                    'layer4.1.conv2',
-#                    'fc')
+modules_to_hook = ('conv1',
+                   'layer1.1.conv2',
+                   'layer2.1.conv2',
+                   'layer3.1.conv2',
+                   'layer4.1.conv2',
+                   'fc')
 # Res34
 # modules_to_hook = ('conv1',
 #                    'layer1.2.conv2',
@@ -263,16 +263,17 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 #                    'features.25',
 #                    'classifier')
 # FC_2
-modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
+# modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
-# train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
-# test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
+test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
 
-train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
-test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
+# train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
+# test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
+
 train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
 
