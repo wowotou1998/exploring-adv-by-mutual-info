@@ -21,9 +21,9 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
-Forward_Size = 500
-Forward_Repeat = 10
-Std_Epoch_Num = 3
+Forward_Size = 1000
+Forward_Repeat = 5
+Std_Epoch_Num = 50
 
 
 # ! /usr/local/env python
@@ -45,9 +45,8 @@ Std_Epoch_Num = 3
 #     # 输出：(123, abcdedf, [ac, 123], {key1: value1, key: value})
 
 
-def ATK(Random_Start=False):
-    global model
-    atk = PGD(model, eps=45 / 255, alpha=15 / 255, steps=5, random_start=Random_Start)
+def ATK(model, Random_Start=False):
+    atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
@@ -213,23 +212,25 @@ from ModelSet import *
 from Models.VGG import *
 
 # model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
-# model, Model_Name = ModelSet.Alex_1(), 'Alex_1'
+std_model, adv_model, Model_Name = ModelSet.Alex_1(), ModelSet.Alex_1(), 'Alex_1'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-model, Model_Name = VGG('VGG11'), 'VGG11'
+# model, Model_Name = VGG('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
-print("Model Structure\n", model)
+print("Model Structure\n", std_model)
 
-Learning_Rate = 0.01
-optimizer = optim.SGD(model.parameters(),
-                      lr=Learning_Rate,
-                      momentum=0.9,
-                      # weight_decay=2e-4
-                      )
+Learning_Rate = 0.1
+std_optimizer = optim.SGD(std_model.parameters(),
+                          lr=Learning_Rate,
+                          momentum=0.9,
+                          )
+adv_optimizer = optim.SGD(adv_model.parameters(),
+                          lr=Learning_Rate,
+                          momentum=0.9,
+                          # weight_decay=2e-4
+                          )
 
-milestones = [100, 200]
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 # # Res18
 # modules_to_hook = ('conv1',
 #                    'layer1.1.conv2',
@@ -251,18 +252,19 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 #                    'block3.layer.0.relu2',
 #                    'fc')
 # net_cifar10, Alex_1
-# modules_to_hook = ('conv1',
-#                    'conv2',
-#                    'fc1',
-#                    'fc2',
-#                    'fc3')
+modules_to_hook = ('conv1',
+                   'conv2',
+                   'fc1',
+                   'fc2',
+                   'fc3')
+
 # VGG11
-modules_to_hook = ('features.0',
-                   'features.7',
-                   'features.14',
-                   'features.21',
-                   'features.28',
-                   'classifier')
+# modules_to_hook = ('features.0',
+#                    'features.7',
+#                    'features.14',
+#                    'features.21',
+#                    'features.28',
+#                    'classifier')
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
@@ -280,8 +282,8 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=
 
 
 @torch.no_grad()
-def get_clean_or_adv_image(Keep_Clean):
-    atk = ATK(Random_Start=False)
+def get_clean_or_adv_image(model, Keep_Clean):
+    atk = ATK(model, Random_Start=False)
 
     batch_images, batch_labels = next(iter(test_loader))
     batch_images = batch_images.to(Device)
@@ -296,13 +298,13 @@ def get_clean_or_adv_image(Keep_Clean):
 
 
 @torch.no_grad()
-def acc_and_mutual_info_calculate(Keep_Clean):
+def acc_and_mutual_info_calculate(model, Keep_Clean):
     # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
     # a = list[-1]就是最后一个元素
+    model.eval()
+
     correct_N = 0
     total_N = 0
-
-    model.eval()
 
     image_chunk = []
     label_chunk = []
@@ -315,7 +317,7 @@ def acc_and_mutual_info_calculate(Keep_Clean):
 
     for i in range(Forward_Repeat):
 
-        images, labels = get_clean_or_adv_image(Keep_Clean)
+        images, labels = get_clean_or_adv_image(model, Keep_Clean)
 
         # labels = labels.to(Device)
         # # print('std_test_size', images.size(0))
@@ -373,22 +375,24 @@ def acc_and_mutual_info_calculate(Keep_Clean):
 
 
 # this training function is only for classification task
-def training(Enable_Adv_Training):
-    global model
+def training(model, Enable_Adv_Training):
     train_clean_loss = []
     train_adv_loss = []
     train_acc = []
     test_clean_acc, test_adv_acc = [], []
+    optimizer = adv_optimizer if Enable_Adv_Training else std_optimizer
+    milestones = [50, 100]
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 
     criterion = nn.CrossEntropyLoss()
 
     # Load checkpoint.
-    if Enable_Adv_Training:
-        # 装载训练好的模型
-        print('--> %s is adv training...' % Model_Name)
-        print('--> Loading model state dict..')
-        load_model(model, './Checkpoint/%s_std.pth' % Model_Name)
-        print('--> Load checkpoint successfully! ')
+    # if Enable_Adv_Training:
+    #     # 装载训练好的模型
+    #     print('--> %s is adv training...' % Model_Name)
+    #     print('--> Loading model state dict..')
+    #     load_model(model, './Checkpoint/%s_std.pth' % Model_Name)
+    #     print('--> Load checkpoint successfully! ')
 
     model = model.to(Device)
     model.train()
@@ -398,8 +402,8 @@ def training(Enable_Adv_Training):
 
         # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
         # if (epoch_i + 1) % 3 == 0:
-        epoch_test_clean_acc = acc_and_mutual_info_calculate(Keep_Clean=True)
-        epoch_test_adv_acc = acc_and_mutual_info_calculate(Keep_Clean=False)
+        epoch_test_clean_acc = acc_and_mutual_info_calculate(model, Keep_Clean=True)
+        epoch_test_adv_acc = acc_and_mutual_info_calculate(model, Keep_Clean=False)
         # 在验证集上的干净样本准确率，对抗样本准确率
         test_clean_acc.append(epoch_test_clean_acc)
         test_adv_acc.append(epoch_test_adv_acc)
@@ -411,7 +415,7 @@ def training(Enable_Adv_Training):
             batch_images = batch_images.to(Device)
 
             if Enable_Adv_Training:
-                atk = ATK(Random_Start=True)
+                atk = ATK(model,Random_Start=True)
                 batch_images = atk(batch_images, batch_labels)
 
             outputs = model(batch_images)
@@ -470,10 +474,10 @@ def training(Enable_Adv_Training):
     return analytic_data
 
 
-analytic_data = training(Enable_Adv_Training=False)
+# analytic_data = training(Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-analytic_data_2 = training(Enable_Adv_Training=True)
+analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
 
 print('end')
 
