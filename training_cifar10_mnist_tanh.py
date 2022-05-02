@@ -26,25 +26,6 @@ Forward_Repeat = 5
 Std_Epoch_Num = 50
 
 
-# ! /usr/local/env python
-# -*- coding=utf-8 -*-
-
-# if __name__ == "__main__":
-#     import pickle
-#
-#     # 序列化到文件
-#     obj = 123, "abcdedf", ["ac", 123], {"key": "value", "key1": "value1"}
-#     print(obj)
-#     # 输出：(123, abcdedf, [ac, 123], {key1: value1, key: value})
-#     # r 读写权限 r b 读写到二进制文件
-#     f = open(r"d:\Anaconda\envs\my_env\a.txt", 'wb')
-#     pickle.dump(obj, f)
-#     f.close()
-#     f = open(r"d:\Anaconda\envs\my_env\a.txt", 'rb')
-#     print(pickle.load(f))
-#     # 输出：(123, abcdedf, [ac, 123], {key1: value1, key: value})
-
-
 def ATK(model, Random_Start=False):
     atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
     return atk
@@ -415,7 +396,7 @@ def training(model, Enable_Adv_Training):
             batch_images = batch_images.to(Device)
 
             if Enable_Adv_Training:
-                atk = ATK(model,Random_Start=True)
+                atk = ATK(model, Random_Start=True)
                 batch_images = atk(batch_images, batch_labels)
 
             outputs = model(batch_images)
@@ -474,10 +455,10 @@ def training(model, Enable_Adv_Training):
     return analytic_data
 
 
-# analytic_data = training(Enable_Adv_Training=False)
+analytic_data = training(std_model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
+# analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
 
 print('end')
 
