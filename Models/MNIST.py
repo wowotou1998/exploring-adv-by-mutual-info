@@ -3,7 +3,7 @@ from torch import nn
 
 # [1024, 20, 20, 20]
 class FC_Sigmoid(nn.Module):
-    def __init__(self, Activation_F):
+    def __init__(self, Activation_F=nn.ReLU()):
         super().__init__()
         self.name = "FC_784_1024_20(3)_10_Sigmoid"
         # 最后是三个全连接层
@@ -53,7 +53,7 @@ class FC_Sigmoid(nn.Module):
 
 
 class FC_2(nn.Module):
-    def __init__(self, Activation_F):
+    def __init__(self, Activation_F=nn.ReLU()):
         super().__init__()
         self.name = "FC_784_1024_20(3)_10"
         # 最后是三个全连接层
@@ -63,6 +63,7 @@ class FC_2(nn.Module):
             nn.Linear(784, 1024),
             Activation_F,
             nn.Linear(1024, 20),
+            Activation_F,
             nn.Linear(20, 20),
             Activation_F,
             nn.Linear(20, 20),

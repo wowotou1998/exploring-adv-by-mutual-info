@@ -21,9 +21,9 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
-Forward_Size = 2000
+Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 20
+Std_Epoch_Num = 15
 
 
 # def ATK(model, Random_Start=False):
@@ -198,11 +198,11 @@ Activation_F = 'Tanh'
 # Activation_F = 'ReLU'
 
 from torchvision.models import *
-from Models.MNIST import FC_Sigmoid, Net_mnist
+from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
 from Models.CIFAR10 import Alex_1_cifar10
 
-std_model, adv_model, Model_Name = Net_mnist(), \
-                                   Net_mnist(), 'Net_mnist'
+std_model, adv_model, Model_Name = FC_2(), \
+                                   FC_2(), 'FC_2'
 # std_model, adv_model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
@@ -468,7 +468,7 @@ def training(model, Enable_Adv_Training):
 analytic_data = training(std_model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-# analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
+analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
 
 print('end')
 
