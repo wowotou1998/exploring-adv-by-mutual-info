@@ -72,7 +72,7 @@ def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
 
 def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
     global Forward_Size, Forward_Repeat
-    basic_info = {'model': Model_Name,
+    basic_info = {'Model': Model_Name,
                   'Enable_Adv_Training': Enable_Adv_Training,
                   'Forward_Size': Forward_Size,
                   'Forward_Repeat': Forward_Repeat,
@@ -199,8 +199,9 @@ from torchvision.models import *
 from ModelSet import *
 from Models.VGG import *
 
-# model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
-std_model, adv_model, Model_Name = ModelSet.Alex_1(), ModelSet.Alex_1(), 'Alex_1'
+std_model, adv_model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), \
+                                   ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
+# std_model, adv_model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
@@ -239,12 +240,12 @@ adv_optimizer = optim.SGD(adv_model.parameters(),
 #                    'block2.layer.0.relu2',
 #                    'block3.layer.0.relu2',
 #                    'fc')
-# net_cifar10, Alex_1
-modules_to_hook = ('conv1',
-                   'conv2',
-                   'fc1',
-                   'fc2',
-                   'fc3')
+# net_cifar10, Alex_1_cifar10
+# modules_to_hook = ('conv1',
+#                    'conv2',
+#                    'fc1',
+#                    'fc2',
+#                    'fc3')
 
 # VGG11
 # modules_to_hook = ('features.0',
@@ -254,7 +255,7 @@ modules_to_hook = ('conv1',
 #                    'features.28',
 #                    'classifier')
 # FC_2
-# modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
+modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
