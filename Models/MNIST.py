@@ -104,10 +104,10 @@ class FC_3(nn.Module):
         return z
 
 
-class net_mnist(nn.Module):
+class Net_mnist(nn.Module):
     def __init__(self):
         # the input size = Batch *1*28*28
-        super(net_mnist, self).__init__()
+        super(Net_mnist, self).__init__()
         self.seq = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(3, 3)),
             nn.ReLU(),

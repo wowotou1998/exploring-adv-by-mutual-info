@@ -21,13 +21,17 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 
 Enable_Show = True
 Train_Batch_Size = 128
-Forward_Size = 1000
+Forward_Size = 2000
 Forward_Repeat = 5
-Std_Epoch_Num = 50
+Std_Epoch_Num = 20
 
+
+# def ATK(model, Random_Start=False):
+#     atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+#     return atk
 
 def ATK(model, Random_Start=False):
-    atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(model, eps=45 / 255, alpha=8 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
@@ -95,8 +99,6 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
-    global Forward_Repeat
-    global Forward_Size
 
     title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
@@ -186,8 +188,8 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
 
 data_tf = transforms.Compose([
-    transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
-    transforms.RandomHorizontalFlip(),
+    # transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
+    # transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
 ])
 
@@ -196,11 +198,11 @@ Activation_F = 'Tanh'
 # Activation_F = 'ReLU'
 
 from torchvision.models import *
-from Models.MNIST import FC_Sigmoid
+from Models.MNIST import FC_Sigmoid, Net_mnist
 from Models.CIFAR10 import Alex_1_cifar10
 
-std_model, adv_model, Model_Name = FC_Sigmoid(torch.nn.ReLU()), \
-                                   FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
+std_model, adv_model, Model_Name = Net_mnist(), \
+                                   Net_mnist(), 'Net_mnist'
 # std_model, adv_model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
@@ -260,11 +262,11 @@ std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
-train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
-test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+# train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
+# test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
 
-# train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
-# test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
+train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
+test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)

@@ -323,6 +323,6 @@ class LeNet_cifar10(nn.Module):
 # x2 = torch.rand(1, 1, 28, 28)
 #
 # net1 = net_cifar10()
-# net2 = net_mnist()
+# net2 = Net_mnist()
 # print(net1(x1).size())
 # print(net2(x2).size())
