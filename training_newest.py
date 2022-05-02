@@ -196,11 +196,11 @@ Activation_F = 'Tanh'
 # Activation_F = 'ReLU'
 
 from torchvision.models import *
-from ModelSet import *
-from Models.VGG import *
+from Models.MNIST import FC_Sigmoid
+from Models.CIFAR10 import Alex_1_cifar10
 
-std_model, adv_model, Model_Name = ModelSet.FC_Sigmoid(torch.nn.ReLU()), \
-                                   ModelSet.FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
+std_model, adv_model, Model_Name = FC_Sigmoid(torch.nn.ReLU()), \
+                                   FC_Sigmoid(torch.nn.ReLU()), 'FC_Sigmoid'
 # std_model, adv_model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # model, Model_Name = VGG('VGG11'), 'VGG11'
