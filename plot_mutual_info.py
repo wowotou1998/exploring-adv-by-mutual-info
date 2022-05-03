@@ -30,7 +30,8 @@ line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', mar
 
 def plot_mutual_info(Enable_Adv_Training):
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-    # std, adv = None, None
+    with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'wb') as f:
+        basic_info = pickle.load(f)
     with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'rb') as f:
         analytic_data = pickle.load(f)
     with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
@@ -38,18 +39,17 @@ def plot_mutual_info(Enable_Adv_Training):
     with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'rb') as f:
         adv = pickle.load(f)
 
+    Forward_Size, Forward_Repeat = basic_info['Forward_Size'], basic_info['Forward_Repeat']
+    Model_Name = basic_info['Model']
+    Activation_F = 'relu'
+    Learning_Rate = 0.08
+
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
     Layer_Name = [str(i) for i in range(Layer_Num)]
 
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
-    global Forward_Repeat
-    global Forward_Size
-
-    Model_Name = 'fc'
-    Activation_F = 'relu'
-    Learning_Rate = 0.08
 
     title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
