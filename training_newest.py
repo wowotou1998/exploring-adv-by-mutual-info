@@ -75,13 +75,14 @@ def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
 
 
 def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
+    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     global Forward_Size, Forward_Repeat
     basic_info = {'Model': Model_Name,
                   'Enable_Adv_Training': Enable_Adv_Training,
                   'Forward_Size': Forward_Size,
                   'Forward_Repeat': Forward_Repeat,
                   }
-    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+
     std, adv = std_estimator, adv_estimator
     with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'wb') as f:
         pickle.dump(basic_info, f)

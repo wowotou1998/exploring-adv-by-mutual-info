@@ -30,7 +30,7 @@ line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', mar
 
 def plot_mutual_info(Enable_Adv_Training):
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-    with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'wb') as f:
+    with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'rb') as f:
         basic_info = pickle.load(f)
     with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'rb') as f:
         analytic_data = pickle.load(f)
