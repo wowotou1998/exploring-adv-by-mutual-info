@@ -27,13 +27,14 @@ Forward_Repeat = 5
 Std_Epoch_Num = 10
 
 
-# def ATK(model, Random_Start=False):
-#     atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-#     return atk
-
 def ATK(model, Random_Start=False):
-    atk = PGD(model, eps=45 / 255, alpha=8 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(model, eps=20 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
     return atk
+
+
+# def ATK(model, Random_Start=False):
+#     atk = PGD(model, eps=70 / 255, alpha=15 / 255, steps=7, random_start=Random_Start)
+#     return atk
 
 
 def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
@@ -190,8 +191,8 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
 
 data_tf = transforms.Compose([
-    # transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
-    # transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
+    transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
 ])
 
@@ -203,26 +204,17 @@ from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
 from Models.CIFAR10 import Alex_1_cifar10
 
-std_model, adv_model, Model_Name = FC_2(), \
-                                   FC_2(), 'FC_2'
-# std_model, adv_model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
+# model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
+#                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
+# model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-# model, Model_Name = VGG('VGG11'), 'VGG11'
+model, Model_Name = VGG('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
-print("Model Structure\n", std_model)
+print("Model Structure\n", model)
 
 Learning_Rate = 0.1
-std_optimizer = optim.SGD(std_model.parameters(),
-                          lr=Learning_Rate,
-                          momentum=0.9,
-                          )
-adv_optimizer = optim.SGD(adv_model.parameters(),
-                          lr=Learning_Rate,
-                          momentum=0.9,
-                          # weight_decay=2e-4
-                          )
 
 # # Res18
 # modules_to_hook = ('conv1',
@@ -264,11 +256,11 @@ std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
-# train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
-# test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
+test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
 
-train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
-test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
+# train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
+# test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
@@ -371,13 +363,27 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
 
 
 # this training function is only for classification task
-def training(model, Enable_Adv_Training):
+def training(origin_model, Enable_Adv_Training):
+    import copy
+
     train_loss = []
     train_acc = []
-
     test_clean_acc, test_adv_acc = [], []
     test_clean_loss, test_adv_loss = [], []
-    optimizer = adv_optimizer if Enable_Adv_Training else std_optimizer
+
+    model = copy.deepcopy(origin_model)
+
+    if Enable_Adv_Training:
+        optimizer = optim.SGD(model.parameters(),
+                              lr=Learning_Rate,
+                              momentum=0.9,
+                              )
+    else:
+        optimizer = optim.SGD(model.parameters(),
+                              lr=Learning_Rate,
+                              momentum=0.9,
+                              # weight_decay=2e-4
+                              )
     milestones = [50, 100]
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 
@@ -476,10 +482,10 @@ def training(model, Enable_Adv_Training):
     return analytic_data
 
 
-analytic_data = training(std_model, Enable_Adv_Training=False)
+analytic_data = training(model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
+# analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
 
 print('end')
 
