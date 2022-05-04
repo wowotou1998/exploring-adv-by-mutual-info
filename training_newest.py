@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 10
+Std_Epoch_Num = 3
 
 
 def ATK(model, Random_Start=False):
@@ -202,19 +202,20 @@ Activation_F = 'Tanh'
 
 from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-from Models.CIFAR10 import Alex_1_cifar10,
+from Models.CIFAR10 import Alex_1_cifar10
+# from Models.VGG_s import VGG_s
 
 # model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
 #                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
-# model, Model_Name = ModelSet.Alex_1_cifar10(), ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
+model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-model, Model_Name = VGG('VGG11'), 'VGG11'
+# model, Model_Name = VGG_s(), 'VGG_s_11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
 
-Learning_Rate = 0.1
+Learning_Rate = 1e-1
 
 # # Res18
 # modules_to_hook = ('conv1',
@@ -237,11 +238,11 @@ Learning_Rate = 0.1
 #                    'block3.layer.0.relu2',
 #                    'fc')
 # net_cifar10, Alex_1_cifar10
-# modules_to_hook = ('conv1',
-#                    'conv2',
-#                    'fc1',
-#                    'fc2',
-#                    'fc3')
+modules_to_hook = ('conv1',
+                   'conv2',
+                   'fc1',
+                   'fc2',
+                   'fc3')
 
 # VGG11
 # modules_to_hook = ('features.0',
@@ -250,8 +251,15 @@ Learning_Rate = 0.1
 #                    'features.21',
 #                    'features.28',
 #                    'classifier')
+# VGG_s_11
+# modules_to_hook = ('features.1',
+#                    'features.3',
+#                    'features.6',
+#                    'features.9',
+#                    'features.12',
+#                    'classifier.3')
 # FC_2
-modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
+# modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
@@ -382,7 +390,7 @@ def training(origin_model, Enable_Adv_Training):
         optimizer = optim.SGD(model.parameters(),
                               lr=Learning_Rate,
                               momentum=0.9,
-                              # weight_decay=2e-4
+                              weight_decay=2e-4
                               )
     milestones = [50, 100]
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
@@ -485,7 +493,7 @@ def training(origin_model, Enable_Adv_Training):
 analytic_data = training(model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-# analytic_data_2 = training(adv_model, Enable_Adv_Training=True)
+analytic_data_2 = training(model, Enable_Adv_Training=True)
 
 print('end')
 

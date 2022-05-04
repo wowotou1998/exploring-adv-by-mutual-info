@@ -4,8 +4,6 @@ from pylab import mpl
 import datetime
 from utils import *
 import pickle
-from MI_estimator import mutual_info_estimator
-import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
 
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
@@ -52,7 +50,7 @@ def plot_mutual_info(Enable_Adv_Training):
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
-    title = "%s(%s),LR(%.3f),upper_bin,Clean(Adv),Sample_N(%d),%s" % (
+    title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
 
@@ -174,4 +172,4 @@ def plot_mutual_info(Enable_Adv_Training):
 
 
 plot_mutual_info(Enable_Adv_Training=False)
-# plot_mutual_info(Enable_Adv_Training=True)
+plot_mutual_info(Enable_Adv_Training=True)

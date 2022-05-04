@@ -176,11 +176,11 @@ Activation_F = 'ReLU'
 
 from torchvision.models import *
 from ModelSet import *
-from Models.VGG import *
+from Models.VGG_s import *
 
 # model, Model_Name = ModelSet.Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-# model, Model_Name = VGG('VGG11'), 'VGG11'
+# model, Model_Name = VGG_s('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
