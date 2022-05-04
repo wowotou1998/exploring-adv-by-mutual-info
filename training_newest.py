@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 15
+Std_Epoch_Num = 10
 
 
 # def ATK(model, Random_Start=False):
@@ -448,11 +448,11 @@ def training(model, Enable_Adv_Training):
 
         # print some data
         print('epoch_i[%d], '
-              'train loss[%.4f], train acc[%.2f%%], '
-              'test clean acc[%.2f%%],test adv acc[%.2f%%]'
+              'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]'
+              'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
               % (epoch_i + 1,
-                 train_loss_sum, epoch_train_acc,
-                 epoch_test_clean_acc, epoch_test_adv_acc))
+                 train_loss_sum, epoch_test_clean_loss, epoch_test_adv_loss,
+                 epoch_train_acc, epoch_test_clean_acc, epoch_test_adv_acc))
 
     # Save checkpoint.
     file_name = "./Checkpoint/%s_%s.pth" % (Model_Name, 'adv' if Enable_Adv_Training else 'std')

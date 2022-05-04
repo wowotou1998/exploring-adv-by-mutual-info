@@ -45,6 +45,7 @@ def plot_mutual_info(Enable_Adv_Training):
     Learning_Rate = 0.08
 
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
+    Epochs = [i for i in range(Std_Epoch_Num)]
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
     Layer_Name = [str(i) for i in range(Layer_Num)]
 
@@ -139,10 +140,21 @@ def plot_mutual_info(Enable_Adv_Training):
             #             zorder=2
             #             )
 
-    for idx, (k, v) in enumerate(analytic_data.items()):
-        axs[nrows - 1][idx].set_xlabel('epochs')
-        axs[nrows - 1][idx].set_title(str(k))
-        axs[nrows - 1][idx].plot(v, linestyle='-', linewidth=1)
+    # for idx, (k, v) in enumerate(analytic_data.items()):
+    axs[nrows - 1][0].set_xlabel('epochs')
+    axs[nrows - 1][0].set_title('loss')
+    axs[nrows - 1][0].plot(Epochs, analytic_data['train_loss'], label='train_loss')
+    axs[nrows - 1][0].plot(Epochs, analytic_data['test_clean_loss'], label='test_clean_loss')
+    axs[nrows - 1][0].plot(Epochs, analytic_data['test_adv_loss'], label='test_adv_loss')
+    axs[nrows - 1][0].legend()
+    # -------------------
+    axs[nrows - 1][1].set_xlabel('epochs')
+    axs[nrows - 1][1].set_title('acc')
+    axs[nrows - 1][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
+    axs[nrows - 1][1].plot(Epochs, analytic_data['test_clean_acc'], label='test_clean_acc')
+    axs[nrows - 1][1].plot(Epochs, analytic_data['test_adv_acc'], label='test_adv_acc')
+    axs[nrows - 1][1].legend()
+
     # plt.scatter(epoch_MI_hM_X_upper[0], epoch_MI_hM_Y_upper[0])
     # plt.legend()
 
