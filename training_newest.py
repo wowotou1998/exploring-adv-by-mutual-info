@@ -12,6 +12,7 @@ from MI_estimator import mutual_info_estimator
 from utils import *
 from torchattacks import PGD
 import pickle
+import torch.nn.functional as F
 
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
 # mpl.rcParams["figure.subplot.left"], mpl.rcParams["figure.subplot.right"] = 0.1, 0.95
@@ -297,6 +298,7 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
 
     correct_N = 0
     total_N = 0
+    loss = 0.
 
     image_chunk = []
     label_chunk = []
@@ -325,9 +327,11 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
         计算模型的准确率
         """
         outputs = model(images)
+        loss_i = F.cross_entropy(outputs, labels)
         _, predicted = torch.max(outputs.data, dim=1)
         correct_N += (predicted == labels).sum().item()
         total_N += labels.size(0)
+        loss += loss_i.item()
 
         """
         发现并修改了一个重大bug, 这里每forward一次,caculate_MI 函数计算出的互信息值都直接挂在列表的后面，那么 Forward_Repeat 会成倍放大列表的长度
@@ -363,15 +367,16 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
     estimator.store_MI()
 
     acc = correct_N * 100. / total_N
-    return acc
+    return acc, loss
 
 
 # this training function is only for classification task
 def training(model, Enable_Adv_Training):
-    train_clean_loss = []
-    train_adv_loss = []
+    train_loss = []
     train_acc = []
+
     test_clean_acc, test_adv_acc = [], []
+    test_clean_loss, test_adv_loss = [], []
     optimizer = adv_optimizer if Enable_Adv_Training else std_optimizer
     milestones = [50, 100]
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
@@ -394,11 +399,14 @@ def training(model, Enable_Adv_Training):
 
         # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
         # if (epoch_i + 1) % 3 == 0:
-        epoch_test_clean_acc = acc_and_mutual_info_calculate(model, Keep_Clean=True)
-        epoch_test_adv_acc = acc_and_mutual_info_calculate(model, Keep_Clean=False)
-        # 在验证集上的干净样本准确率，对抗样本准确率
+        epoch_test_clean_acc, epoch_test_clean_loss = acc_and_mutual_info_calculate(model, Keep_Clean=True)
+        epoch_test_adv_acc, epoch_test_adv_loss = acc_and_mutual_info_calculate(model, Keep_Clean=False)
+        # 在验证集上的干净样本准确率，对抗样本准确率,loss
         test_clean_acc.append(epoch_test_clean_acc)
         test_adv_acc.append(epoch_test_adv_acc)
+
+        test_clean_loss.append(epoch_test_clean_loss)
+        test_adv_loss.append(epoch_test_adv_loss)
 
         for batch_images, batch_labels in train_loader:
 
@@ -433,7 +441,7 @@ def training(model, Enable_Adv_Training):
             sample_sum += batch_images.shape[0]
 
         # 记录每一轮的训练集准确度，损失，测试集准确度
-        train_clean_loss.append(train_loss_sum)
+        train_loss.append(train_loss_sum)
         # 训练准确率
         epoch_train_acc = (train_acc_sum / sample_sum) * 100.0
         train_acc.append(epoch_train_acc)
@@ -451,7 +459,9 @@ def training(model, Enable_Adv_Training):
     save_model(model, file_name)
 
     analytic_data = {
-        'train_clean_loss': train_clean_loss,
+        'train_loss': train_loss,
+        'test_clean_loss': test_clean_loss,
+        'test_adv_loss': test_adv_loss,
         'train_acc': train_acc,
         'test_clean_acc': test_clean_acc,
         'test_adv_acc': test_adv_acc
