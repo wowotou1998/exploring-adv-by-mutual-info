@@ -27,6 +27,29 @@ Forward_Repeat = 5
 Std_Epoch_Num = 3
 
 
+def get_train_test_loader(Data_Set='CIFAR10'):
+    data_tf_cifar10 = transforms.Compose([
+        transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+    ])
+    data_tf_mnist = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
+    if Data_Set == 'CIFAR10':
+        train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
+                                         download=True)
+        test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+    else:
+        train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
+        test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf_mnist)
+
+    Train_Loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, shuffle=True)
+    Test_Loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
+    return Train_Loader, Test_Loader
+
+
 def ATK(model, Random_Start=False):
     atk = PGD(model, eps=20 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
     return atk
@@ -190,12 +213,6 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
                 )
 
 
-data_tf = transforms.Compose([
-    transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-])
-
 # 选择模型
 Activation_F = 'Tanh'
 # Activation_F = 'ReLU'
@@ -203,6 +220,7 @@ Activation_F = 'Tanh'
 from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
 from Models.CIFAR10 import Alex_1_cifar10
+
 # from Models.VGG_s import VGG_s
 
 # model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
@@ -264,21 +282,15 @@ std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
-train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf, download=True)
-test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
 
-# train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf, download=True)
-# test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf)
-
-train_loader = DataLoader(dataset=train_dataset, batch_size=Train_Batch_Size, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=Forward_Size, shuffle=True)
+Train_Loader, Test_Loader = get_train_test_loader(Data_Set='CIFAR10')
 
 
 @torch.no_grad()
 def get_clean_or_adv_image(model, Keep_Clean):
     atk = ATK(model, Random_Start=False)
 
-    batch_images, batch_labels = next(iter(test_loader))
+    batch_images, batch_labels = next(iter(Test_Loader))
     batch_images = batch_images.to(Device)
     batch_labels = batch_labels.to(Device)
     if Keep_Clean:
@@ -422,7 +434,7 @@ def training(origin_model, Enable_Adv_Training):
         test_clean_loss.append(epoch_test_clean_loss)
         test_adv_loss.append(epoch_test_adv_loss)
 
-        for batch_images, batch_labels in train_loader:
+        for batch_images, batch_labels in Train_Loader:
 
             # data moved to GPU
             batch_labels = batch_labels.to(Device)
