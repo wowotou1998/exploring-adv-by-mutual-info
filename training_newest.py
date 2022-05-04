@@ -202,7 +202,7 @@ Activation_F = 'Tanh'
 
 from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-from Models.CIFAR10 import Alex_1_cifar10
+from Models.CIFAR10 import Alex_1_cifar10,
 
 # model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
 #                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
