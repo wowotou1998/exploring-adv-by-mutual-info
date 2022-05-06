@@ -219,15 +219,13 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
 from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-from Models.CIFAR10 import Alex_1_cifar10, WideResNet
-
-# from Models.VGG_s import VGG_s
+from Models.CIFAR10 import Alex_1_cifar10, WideResNet, VGG_s
 
 # model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
 #                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
 model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-model, Model_Name = VGG_s(), 'VGG_s_11'
+# model, Model_Name = VGG_s(), 'VGG_s_11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
@@ -236,28 +234,8 @@ print("Model Structure\n", model)
 Learning_Rate = 1e-1
 
 
-# WideResNet
-# modules_to_hook = ('conv1',
-#                    'block1.layer.0.relu2',
-#                    'block2.layer.0.relu2',
-#                    'block3.layer.0.relu2',
-#                    'fc')
 
 
-# VGG11
-# modules_to_hook = ('features.0',
-#                    'features.7',
-#                    'features.14',
-#                    'features.21',
-#                    'features.28',
-#                    'classifier')
-# VGG_s_11
-# modules_to_hook = ('features.1',
-#                    'features.3',
-#                    'features.6',
-#                    'features.9',
-#                    'features.12',
-#                    'classifier.3')
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
@@ -491,7 +469,6 @@ adv_estimator.clear_all()
 
 print('end')
 
-
 # # Res18
 # modules_to_hook = ('conv1',
 #                    'layer1.1.conv2',
@@ -506,6 +483,13 @@ print('end')
 #                    'layer3.5.conv2',
 #                    'layer4.2.conv2',
 #                    'fc')
+# VGG11
+# modules_to_hook = ('features.0',
+#                    'features.7',
+#                    'features.14',
+#                    'features.21',
+#                    'features.28',
+#                    'classifier')
 """
 epoch_MI_hM_X_upper = std_estimator.epoch_MI_hM_X_upper
 epoch_MI_hM_Y_upper = std_estimator.epoch_MI_hM_Y_upper
