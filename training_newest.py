@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 3
+Std_Epoch_Num = 6
 
 
 def get_train_test_loader(Data_Set='CIFAR10'):
@@ -51,7 +51,7 @@ def get_train_test_loader(Data_Set='CIFAR10'):
 
 
 def ATK(model, Random_Start=False):
-    atk = PGD(model, eps=20 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
@@ -502,7 +502,7 @@ def training(origin_model, Enable_Adv_Training):
     return analytic_data
 
 
-analytic_data = training(model, Enable_Adv_Training=False)
+# analytic_data = training(model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
 analytic_data_2 = training(model, Enable_Adv_Training=True)
