@@ -133,6 +133,12 @@ class WideResNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
+        self.modules_to_hook = ('conv1',
+                                'block1.layer.0.relu2',
+                                'block2.layer.0.relu2',
+                                'block3.layer.0.relu2',
+                                'fc')
+
     def forward(self, x, _eval=False):
         if _eval:
             # switch to eval mode
@@ -255,6 +261,12 @@ class Alex_1_cifar10(nn.Module):
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
+        self.modules_to_hook = ('conv1',
+                                'conv2',
+                                'fc1',
+                                'fc2',
+                                'fc3')
+
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
@@ -315,6 +327,69 @@ class LeNet_cifar10(nn.Module):
         out = F.relu(self.fc2(out))
         out = self.fc3(out)
         return out
+
+
+class VGG_s(nn.Module):
+    # implement a simple version of vgg11 (https://arxiv.org/pdf/1409.1556.pdf)
+    # the shape of image in CIFAR10 is 32x32x3, much smaller than 224x224x3,
+    # the number of channels and hidden units are decreased compared to the architecture in paper
+    def __init__(self):
+        super(VGG_s, self).__init__()
+        self.features = nn.Sequential(
+            # Stage 1
+            # TODO: convolutional layer, input channels 3, output channels 8, filter size 3
+            # TODO: max-pooling layer, size 2
+            nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2),
+            # Stage 2
+            # TODO: convolutional layer, input channels 8, output channels 16, filter size 3
+            # TODO: max-pooling layer, size 2
+            nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2),
+            # Stage 3
+            # TODO: convolutional layer, input channels 16, output channels 32, filter size 3
+            # TODO: convolutional layer, input channels 32, output channels 32, filter size 3
+            # TODO: max-pooling layer, size 2
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2),
+            # Stage 4
+            # TODO: convolutional layer, input channels 32, output channels 64, filter size 3
+            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
+            # TODO: max-pooling layer, size 2
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2),
+            # Stage 5
+            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
+            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
+            # TODO: max-pooling layer, size 2
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2)
+        )
+
+        self.classifier = nn.Sequential(
+            # TODO: fully-connected layer (64->64)
+            # TODO: fully-connected layer (64->10)
+            nn.Linear(in_features=64, out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=10),
+            nn.ReLU()
+        )
+
+        self.modules_to_hook = ('features.1',
+                                'features.3',
+                                'features.6',
+                                'features.9',
+                                'features.12',
+                                'classifier.3')
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 64)
+        x = self.classifier(x)
+        return x
 
 
 '''VGG11/13/16/19 in Pytorch.'''

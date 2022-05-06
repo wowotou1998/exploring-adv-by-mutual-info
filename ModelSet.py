@@ -289,6 +289,13 @@ class net_cifar10(nn.Module):
             nn.Linear(256, 10)
         )
 
+
+        self.modules_to_hook = ('conv1',
+                                'conv2',
+                                'fc1',
+                                'fc2',
+                                'fc3')
+
     def forward(self, x):
         r1 = self.seq(x)
         r1 = r1.view(r1.size(0), -1)
@@ -315,9 +322,6 @@ class LeNet_cifar10(nn.Module):
         out = F.relu(self.fc2(out))
         out = self.fc3(out)
         return out
-
-
-
 
 # x1 = torch.rand(1, 3, 32, 32)
 # x2 = torch.rand(1, 1, 28, 28)

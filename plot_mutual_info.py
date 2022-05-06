@@ -167,9 +167,9 @@ def plot_mutual_info(Enable_Adv_Training):
     #                                                      Is_Adv_Training
     #                                                      )
     #             )
-    fig.savefig('%s_mutual_info.pdf' % Is_Adv_Training)
+    fig.savefig('mutual_info_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
     print("Work has done!")
 
 
 plot_mutual_info(Enable_Adv_Training=False)
-plot_mutual_info(Enable_Adv_Training=True)
+# plot_mutual_info(Enable_Adv_Training=True)

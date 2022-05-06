@@ -214,12 +214,12 @@ def plot_mutual_info(std_estimator, adv_estimator, analytic_data, Enable_Adv_Tra
 
 
 # 选择模型
-Activation_F = 'Tanh'
+# Activation_F = 'Tanh'
 # Activation_F = 'ReLU'
 
 from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-from Models.CIFAR10 import Alex_1_cifar10
+from Models.CIFAR10 import Alex_1_cifar10, WideResNet
 
 # from Models.VGG_s import VGG_s
 
@@ -227,7 +227,7 @@ from Models.CIFAR10 import Alex_1_cifar10
 #                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
 model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
 # model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-# model, Model_Name = VGG_s(), 'VGG_s_11'
+model, Model_Name = VGG_s(), 'VGG_s_11'
 # model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
@@ -235,32 +235,14 @@ print("Model Structure\n", model)
 
 Learning_Rate = 1e-1
 
-# # Res18
-# modules_to_hook = ('conv1',
-#                    'layer1.1.conv2',
-#                    'layer2.1.conv2',
-#                    'layer3.1.conv2',
-#                    'layer4.1.conv2',
-#                    'fc')
-# Res34
-# modules_to_hook = ('conv1',
-#                    'layer1.2.conv2',
-#                    'layer2.3.conv2',
-#                    'layer3.5.conv2',
-#                    'layer4.2.conv2',
-#                    'fc')
+
 # WideResNet
 # modules_to_hook = ('conv1',
 #                    'block1.layer.0.relu2',
 #                    'block2.layer.0.relu2',
 #                    'block3.layer.0.relu2',
 #                    'fc')
-# net_cifar10, Alex_1_cifar10
-modules_to_hook = ('conv1',
-                   'conv2',
-                   'fc1',
-                   'fc2',
-                   'fc3')
+
 
 # VGG11
 # modules_to_hook = ('features.0',
@@ -278,8 +260,8 @@ modules_to_hook = ('conv1',
 #                    'classifier.3')
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
-std_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
-adv_estimator = mutual_info_estimator(modules_to_hook, By_Layer_Name=False)
+std_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
+adv_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
 
@@ -502,13 +484,28 @@ def training(origin_model, Enable_Adv_Training):
     return analytic_data
 
 
-# analytic_data = training(model, Enable_Adv_Training=False)
+analytic_data = training(model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-analytic_data_2 = training(model, Enable_Adv_Training=True)
+# analytic_data_2 = training(model, Enable_Adv_Training=True)
 
 print('end')
 
+
+# # Res18
+# modules_to_hook = ('conv1',
+#                    'layer1.1.conv2',
+#                    'layer2.1.conv2',
+#                    'layer3.1.conv2',
+#                    'layer4.1.conv2',
+#                    'fc')
+# Res34
+# modules_to_hook = ('conv1',
+#                    'layer1.2.conv2',
+#                    'layer2.3.conv2',
+#                    'layer3.5.conv2',
+#                    'layer4.2.conv2',
+#                    'fc')
 """
 epoch_MI_hM_X_upper = std_estimator.epoch_MI_hM_X_upper
 epoch_MI_hM_Y_upper = std_estimator.epoch_MI_hM_Y_upper
