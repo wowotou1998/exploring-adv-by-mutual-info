@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 6
+Std_Epoch_Num = 10
 
 
 def get_train_test_loader(Data_Set='CIFAR10'):
@@ -51,7 +51,8 @@ def get_train_test_loader(Data_Set='CIFAR10'):
 
 
 def ATK(model, Random_Start=False):
-    atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    # atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
@@ -233,9 +234,6 @@ print("Model Structure\n", model)
 
 Learning_Rate = 1e-1
 
-
-
-
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
 std_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
@@ -339,7 +337,7 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
     estimator.store_MI()
 
     acc = correct_N * 100. / total_N
-    return acc, loss
+    return acc, loss / Forward_Repeat
 
 
 # this training function is only for classification task
@@ -381,6 +379,7 @@ def training(origin_model, Enable_Adv_Training):
     model.train()
 
     for epoch_i in range(Std_Epoch_Num):
+
         train_loss_sum, train_acc_sum, sample_sum = 0.0, 0.0, 0
 
         # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
@@ -427,17 +426,17 @@ def training(origin_model, Enable_Adv_Training):
             sample_sum += batch_images.shape[0]
 
         # 记录每一轮的训练集准确度，损失，测试集准确度
-        train_loss.append(train_loss_sum)
+        train_loss.append(train_loss_sum / len(Train_Loader))
         # 训练准确率
         epoch_train_acc = (train_acc_sum / sample_sum) * 100.0
         train_acc.append(epoch_train_acc)
 
         # print some data
         print('epoch_i[%d], '
-              'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]'
+              'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f] '
               'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
               % (epoch_i + 1,
-                 train_loss_sum, epoch_test_clean_loss, epoch_test_adv_loss,
+                 train_loss_sum / len(Train_Loader), epoch_test_clean_loss, epoch_test_adv_loss,
                  epoch_train_acc, epoch_test_clean_acc, epoch_test_adv_acc))
 
     # Save checkpoint.
@@ -469,6 +468,8 @@ adv_estimator.clear_all()
 
 print('end')
 
+
+"""
 # # Res18
 # modules_to_hook = ('conv1',
 #                    'layer1.1.conv2',
@@ -490,7 +491,7 @@ print('end')
 #                    'features.21',
 #                    'features.28',
 #                    'classifier')
-"""
+
 epoch_MI_hM_X_upper = std_estimator.epoch_MI_hM_X_upper
 epoch_MI_hM_Y_upper = std_estimator.epoch_MI_hM_Y_upper
 epoch_MI_hM_X_bin = std_estimator.epoch_MI_hM_X_bin
