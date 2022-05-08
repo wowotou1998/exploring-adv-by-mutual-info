@@ -172,4 +172,4 @@ def plot_mutual_info(Enable_Adv_Training):
 
 
 plot_mutual_info(Enable_Adv_Training=False)
-# plot_mutual_info(Enable_Adv_Training=True)
+plot_mutual_info(Enable_Adv_Training=True)
