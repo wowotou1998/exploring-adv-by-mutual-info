@@ -83,6 +83,7 @@ class BasicBlock(nn.Module):
         if self.droprate > 0:
             out = F.dropout(out, p=self.droprate, training=self.training)
         out = self.conv2(out)
+        # 这个torch.add 很重要
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
 

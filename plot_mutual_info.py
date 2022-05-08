@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy
 import numpy as np
 from pylab import mpl
 import datetime
@@ -168,8 +169,16 @@ def plot_mutual_info(Enable_Adv_Training):
     #                                                      )
     #             )
     fig.savefig('mutual_info_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+
+    fig, axs = plt.subplots( )
+    for label_i in [i for i in range(10)]:
+        # epoch_i, layer_i, label_i
+        a = numpy.array(std.epoch_MI_hM_Y_lower_detail)[..., 2, 2 * label_i - 1]
+        axs.plot(Epochs, a, label=r'$H(T_%d|y_%d)$' % (2, label_i))
+    axs.legend()
+    plt.show()
     print("Work has done!")
 
 
 plot_mutual_info(Enable_Adv_Training=False)
-plot_mutual_info(Enable_Adv_Training=True)
+# plot_mutual_info(Enable_Adv_Training=True)
