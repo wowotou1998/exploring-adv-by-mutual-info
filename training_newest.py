@@ -50,14 +50,14 @@ def get_train_test_loader(Data_Set='CIFAR10'):
     return Train_Loader, Test_Loader
 
 
-def ATK(model, Random_Start=False):
-    # atk = PGD(model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-    atk = PGD(model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+def ATK(Model, Random_Start=False):
+    # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
-# def ATK(model, Random_Start=False):
-#     atk = PGD(model, eps=70 / 255, alpha=15 / 255, steps=7, random_start=Random_Start)
+# def ATK(Model, Random_Start=False):
+#     atk = PGD(Model, eps=70 / 255, alpha=15 / 255, steps=7, random_start=Random_Start)
 #     return atk
 
 
@@ -222,22 +222,22 @@ from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
 from Models.CIFAR10 import Alex_1_cifar10, WideResNet, VGG_s
 
-# model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
+# Model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
 #                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
-model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
-# model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
-# model, Model_Name = VGG_s(), 'VGG_s_11'
-# model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
-# model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
-# model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
-print("Model Structure\n", model)
+Model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
+# Model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
+# Model, Model_Name = VGG_s(), 'VGG_s_11'
+# Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+# Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
+# Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
+print("Model Structure\n", Model)
 
 Learning_Rate = 1e-1
 
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)
-std_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
-adv_estimator = mutual_info_estimator(model.modules_to_hook, By_Layer_Name=False)
+std_estimator = mutual_info_estimator(Model.modules_to_hook, By_Layer_Name=False)
+adv_estimator = mutual_info_estimator(Model.modules_to_hook, By_Layer_Name=False)
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
 
@@ -245,8 +245,8 @@ Train_Loader, Test_Loader = get_train_test_loader(Data_Set='CIFAR10')
 
 
 @torch.no_grad()
-def get_clean_or_adv_image(model, Keep_Clean):
-    atk = ATK(model, Random_Start=False)
+def get_clean_or_adv_image(Model, Keep_Clean):
+    atk = ATK(Model, Random_Start=False)
 
     batch_images, batch_labels = next(iter(Test_Loader))
     batch_images = batch_images.to(Device)
@@ -261,10 +261,10 @@ def get_clean_or_adv_image(model, Keep_Clean):
 
 
 @torch.no_grad()
-def acc_and_mutual_info_calculate(model, Keep_Clean):
+def acc_and_mutual_info_calculate(Model, Keep_Clean):
     # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
     # a = list[-1]就是最后一个元素
-    model.eval()
+    Model.eval()
 
     correct_N = 0
     total_N = 0
@@ -281,7 +281,7 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
 
     for i in range(Forward_Repeat):
 
-        images, labels = get_clean_or_adv_image(model, Keep_Clean)
+        images, labels = get_clean_or_adv_image(Model, Keep_Clean)
 
         # labels = labels.to(Device)
         # # print('std_test_size', images.size(0))
@@ -292,11 +292,11 @@ def acc_and_mutual_info_calculate(model, Keep_Clean):
         """
         estimator.clear_activations()
         # register hook
-        estimator.do_forward_hook(model)
+        estimator.do_forward_hook(Model)
         """
         计算模型的准确率
         """
-        outputs = model(images)
+        outputs = Model(images)
         loss_i = F.cross_entropy(outputs, labels)
         _, predicted = torch.max(outputs.data, dim=1)
         correct_N += (predicted == labels).sum().item()
@@ -349,15 +349,15 @@ def training(origin_model, Enable_Adv_Training):
     test_clean_acc, test_adv_acc = [], []
     test_clean_loss, test_adv_loss = [], []
 
-    model = copy.deepcopy(origin_model)
+    Model = copy.deepcopy(origin_model)
 
     if Enable_Adv_Training:
-        optimizer = optim.SGD(model.parameters(),
+        optimizer = optim.SGD(Model.parameters(),
                               lr=Learning_Rate,
                               momentum=0.9,
                               )
     else:
-        optimizer = optim.SGD(model.parameters(),
+        optimizer = optim.SGD(Model.parameters(),
                               lr=Learning_Rate,
                               momentum=0.9,
                               weight_decay=2e-4
@@ -371,12 +371,12 @@ def training(origin_model, Enable_Adv_Training):
     # if Enable_Adv_Training:
     #     # 装载训练好的模型
     #     print('--> %s is adv training...' % Model_Name)
-    #     print('--> Loading model state dict..')
-    #     load_model(model, './Checkpoint/%s_std.pth' % Model_Name)
+    #     print('--> Loading Model state dict..')
+    #     load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
     #     print('--> Load checkpoint successfully! ')
 
-    model = model.to(Device)
-    model.train()
+    Model = Model.to(Device)
+    Model.train()
 
     for epoch_i in range(Std_Epoch_Num):
 
@@ -384,8 +384,8 @@ def training(origin_model, Enable_Adv_Training):
 
         # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
         # if (epoch_i + 1) % 3 == 0:
-        epoch_test_clean_acc, epoch_test_clean_loss = acc_and_mutual_info_calculate(model, Keep_Clean=True)
-        epoch_test_adv_acc, epoch_test_adv_loss = acc_and_mutual_info_calculate(model, Keep_Clean=False)
+        epoch_test_clean_acc, epoch_test_clean_loss = acc_and_mutual_info_calculate(Model, Keep_Clean=True)
+        epoch_test_adv_acc, epoch_test_adv_loss = acc_and_mutual_info_calculate(Model, Keep_Clean=False)
         # 在验证集上的干净样本准确率，对抗样本准确率,loss
         test_clean_acc.append(epoch_test_clean_acc)
         test_adv_acc.append(epoch_test_adv_acc)
@@ -400,10 +400,10 @@ def training(origin_model, Enable_Adv_Training):
             batch_images = batch_images.to(Device)
 
             if Enable_Adv_Training:
-                atk = ATK(model, Random_Start=True)
+                atk = ATK(Model, Random_Start=True)
                 batch_images = atk(batch_images, batch_labels)
 
-            outputs = model(batch_images)
+            outputs = Model(batch_images)
 
             if epoch_i == 0 and sample_sum == 0:
                 print(Device)
@@ -441,7 +441,7 @@ def training(origin_model, Enable_Adv_Training):
 
     # Save checkpoint.
     file_name = "./Checkpoint/%s_%s.pth" % (Model_Name, 'adv' if Enable_Adv_Training else 'std')
-    save_model(model, file_name)
+    save_model(Model, file_name)
 
     analytic_data = {
         'train_loss': train_loss,
@@ -461,10 +461,10 @@ def training(origin_model, Enable_Adv_Training):
     return analytic_data
 
 
-analytic_data = training(model, Enable_Adv_Training=False)
+analytic_data = training(Model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()
-# analytic_data_2 = training(model, Enable_Adv_Training=True)
+# analytic_data_2 = training(Model, Enable_Adv_Training=True)
 
 print('end')
 
@@ -526,13 +526,13 @@ for i in range(0, Std_Epoch_Num * 2, 2):
 
 # plt.scatter(epoch_MI_hM_X_upper[0], epoch_MI_hM_Y_upper[0])
 # plt.legend()
-plt.title("%s(%s),LR(%.3f)" % (model.name, Activation_F, Learning_Rate))
+plt.title("%s(%s),LR(%.3f)" % (Model.name, Activation_F, Learning_Rate))
 plt.colorbar(sm, label='Epoch')
 fig = plt.gcf()
 plt.show()
 # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
 fig.savefig('./%s_%s_%s_%s_std.pdf' % (
-    model.name,
+    Model.name,
     Activation_F, str(Std_Epoch_Num),
     datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
 
@@ -544,7 +544,7 @@ def mutual_info_calculate(Keep_Clean=True):
     # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
     # a = list[-1]就是最后一个元素
     import numpy as np
-    model.eval()
+    Model.eval()
     if Keep_Clean:
         estimator = std_estimator
     else:
@@ -564,9 +564,9 @@ def mutual_info_calculate(Keep_Clean=True):
         images = images.to(Device)
 
         # register hook
-        estimator.do_forward_hook(model)
+        estimator.do_forward_hook(Model)
         # forward
-        model(images)
+        Model(images)
         # calculate mutual info
         estimator.caculate_MI(images, labels)
         layer_activations_size = len(estimator.layer_activations)
