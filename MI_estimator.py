@@ -220,6 +220,7 @@ class mutual_info_estimator(object):
                     hM_given_Y_i_lower = entropy_estimator_bd(activation_i_for_Y_i, noise_variance)
                     hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
 
+
                     layer_i_detail_lower.append(Y_probs[y_i].item())
                     layer_i_detail_lower.append(hM_given_Y_i_lower)
 
