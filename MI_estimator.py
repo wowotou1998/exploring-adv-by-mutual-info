@@ -69,6 +69,7 @@ class mutual_info_estimator(object):
 
         self.epoch_MI_hM_X_lower.clear()
         self.epoch_MI_hM_Y_lower.clear()
+        self.epoch_MI_hM_Y_lower_detail
 
         self.epoch_MI_hM_X_upper.clear()
         self.epoch_MI_hM_Y_upper.clear()
@@ -79,6 +80,7 @@ class mutual_info_estimator(object):
         # temp variable
         self.epoch_i_MI_hM_X_lower.clear()
         self.epoch_i_MI_hM_Y_lower.clear()
+        self.epoch_i_MI_hM_Y_lower_detail
 
         self.epoch_i_MI_hM_X_upper.clear()
         self.epoch_i_MI_hM_Y_upper.clear()
@@ -204,7 +206,7 @@ class mutual_info_estimator(object):
             # -------- I(T;X), I(T;Y)  upper and lower  --------
             # 最后一层输出 \hat{y} 也可以直接使用KDE来计算互信息, 因为 \hat{y} 仅仅只是预测值,不是真实的标签 y, 自然也可以当成隐藏层来计算互信息
             hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
-            if  self.DO_LOWER:
+            if self.DO_LOWER:
                 # -------- I(T;X) lower --------
                 hM_lower = entropy_estimator_bd(layer_i_activations, noise_variance)
                 MI_hM_X_lower.append(nats2bits * (hM_lower - hM_given_X))
@@ -220,16 +222,15 @@ class mutual_info_estimator(object):
                     hM_given_Y_i_lower = entropy_estimator_bd(activation_i_for_Y_i, noise_variance)
                     hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
 
-
+                    # 存储 H(T|y) 的信息 以及 p(y) 的概率
                     layer_i_detail_lower.append(Y_probs[y_i].item())
                     layer_i_detail_lower.append(hM_given_Y_i_lower)
 
                 MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
+                layers_detail_lower.append(layer_i_detail_lower)
 
             # -------- I(T;X), I(T;Y)  upper  --------
             if self.DO_UPPER:
-                # 最后一层输出 \hat{y} 也可以直接使用KDE来计算互信息, 因为 \hat{y} 仅仅只是预测值,不是真实的标签 y, 自然也可以当成隐藏层来计算互信息
-                # hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
                 # -------- I(T;X) upper --------
                 hM_upper = entropy_estimator_kl_simple(layer_i_activations, noise_variance)
                 MI_hM_X_upper.append(nats2bits * (hM_upper - hM_given_X))
@@ -256,6 +257,8 @@ class mutual_info_estimator(object):
         if self.DO_LOWER:
             self.epoch_i_MI_hM_X_lower = MI_hM_X_lower
             self.epoch_i_MI_hM_Y_lower = MI_hM_Y_lower
+
+            self.epoch_i_MI_hM_Y_lower_detail = layers_detail_lower
         # if self.DO_MINE:
         #     self.epoch_i_MI_hM_X_mine = MI_hM_X_mine
         #     self.epoch_i_MI_hM_Y_mine = MI_hM_Y_mine
@@ -270,3 +273,4 @@ class mutual_info_estimator(object):
         if self.DO_LOWER:
             self.epoch_MI_hM_X_lower.append(self.epoch_i_MI_hM_X_lower)
             self.epoch_MI_hM_Y_lower.append(self.epoch_i_MI_hM_Y_lower)
+            self.epoch_MI_hM_Y_lower_detail.append(self.epoch_i_MI_hM_Y_lower_detail)
