@@ -141,13 +141,14 @@ class mutual_info_estimator(object):
 
         MI_hM_X_lower = []
         MI_hM_Y_lower = []
-
-        MI_hM_X_upper = []
-        MI_hM_Y_upper = []
         """
         如果不做细致的分析，MI_hM_Y_upper 列表中每一个元素都是每一层神经网络的互信息值
         """
-        layers_detail_lower = []
+        MI_hM_Y_lower_detail = []
+
+        MI_hM_X_upper = []
+        MI_hM_Y_upper = []
+
 
         MI_hM_X_bin = []
         MI_hM_Y_bin = []
@@ -175,7 +176,7 @@ class mutual_info_estimator(object):
             saved_label_idx[idx] = value.detach().cpu().clone().numpy()
 
         for layer_idx, layer_i_activations in enumerate(layer_activations):
-            layer_i_detail_lower = []
+            layer_i_lower_detail = []
 
             # -------- I(T;X), I(T;Y)  MINE --------
             """
@@ -206,6 +207,7 @@ class mutual_info_estimator(object):
             # -------- I(T;X), I(T;Y)  upper and lower  --------
             # 最后一层输出 \hat{y} 也可以直接使用KDE来计算互信息, 因为 \hat{y} 仅仅只是预测值,不是真实的标签 y, 自然也可以当成隐藏层来计算互信息
             hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
+
             if self.DO_LOWER:
                 # -------- I(T;X) lower --------
                 hM_lower = entropy_estimator_bd(layer_i_activations, noise_variance)
@@ -223,11 +225,11 @@ class mutual_info_estimator(object):
                     hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
 
                     # 存储 H(T|y) 的信息 以及 p(y) 的概率
-                    layer_i_detail_lower.append(Y_probs[y_i].item())
-                    layer_i_detail_lower.append(hM_given_Y_i_lower)
+                    layer_i_lower_detail.append(Y_probs[y_i].item())
+                    layer_i_lower_detail.append(hM_given_Y_i_lower)
 
                 MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
-                layers_detail_lower.append(layer_i_detail_lower)
+                MI_hM_Y_lower_detail.append(layer_i_lower_detail)
 
             # -------- I(T;X), I(T;Y)  upper  --------
             if self.DO_UPPER:
@@ -258,7 +260,7 @@ class mutual_info_estimator(object):
             self.epoch_i_MI_hM_X_lower = MI_hM_X_lower
             self.epoch_i_MI_hM_Y_lower = MI_hM_Y_lower
 
-            self.epoch_i_MI_hM_Y_lower_detail = layers_detail_lower
+            self.epoch_i_MI_hM_Y_lower_detail = MI_hM_Y_lower_detail
         # if self.DO_MINE:
         #     self.epoch_i_MI_hM_X_mine = MI_hM_X_mine
         #     self.epoch_i_MI_hM_Y_mine = MI_hM_Y_mine

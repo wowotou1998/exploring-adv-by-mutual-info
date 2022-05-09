@@ -170,13 +170,29 @@ def plot_mutual_info(Enable_Adv_Training):
     #             )
     fig.savefig('mutual_info_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
 
-    fig, axs = plt.subplots(nrows=1, ncols=Layer_Num, figsize=(15, 3))
-    for layer_i, ax in enumerate(axs):
+    fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
+    # clean examples info flow
+    for layer_i, ax in enumerate(axs[0]):
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
-            a = numpy.array(std.epoch_MI_hM_Y_lower_detail)[..., layer_i, 2 * label_i - 1]
-            ax.plot(Epochs, a, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
+            data = numpy.array(std.epoch_MI_hM_Y_lower_detail)[..., layer_i, 2 * label_i - 1]
+            ax.plot(Epochs, data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
+        ax.set_xlabel('epochs')
+        # ax.set_title('loss')
         ax.legend()
+        ax.set_title('std')
+
+    # adv example info flow
+    for layer_i, ax in enumerate(axs[1]):
+        for label_i in [i for i in range(10)]:
+            # epoch_i, layer_i, label_i
+            data = numpy.array(adv.epoch_MI_hM_Y_lower_detail)[..., layer_i, 2 * label_i - 1]
+            ax.plot(Epochs, data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
+        ax.set_xlabel('epochs')
+        # ax.set_title('loss')
+        ax.legend()
+        ax.set_title('adv')
+    fig.suptitle('I(T;Y) detail')
     plt.show()
     fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
     print("Work has done!")
