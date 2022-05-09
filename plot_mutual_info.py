@@ -178,7 +178,7 @@ def plot_mutual_info(Enable_Adv_Training):
             # epoch_i, layer_i, label_i
             temp_data = data[..., layer_i, 2 * label_i - 1]
             ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
-        #     plot the H(T_i) lower
+        # plot the H(T_i) lower
         ax.plot(Epochs, data[..., layer_i, -1], label=r'$H(T_%d) Lower$' % (layer_i))
         ax.set_xlabel('epochs')
         if layer_i == 0:

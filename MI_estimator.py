@@ -69,7 +69,7 @@ class mutual_info_estimator(object):
 
         self.epoch_MI_hM_X_lower.clear()
         self.epoch_MI_hM_Y_lower.clear()
-        self.epoch_MI_hM_Y_lower_detail
+        self.epoch_MI_hM_Y_lower_detail.clear()
 
         self.epoch_MI_hM_X_upper.clear()
         self.epoch_MI_hM_Y_upper.clear()
@@ -80,7 +80,7 @@ class mutual_info_estimator(object):
         # temp variable
         self.epoch_i_MI_hM_X_lower.clear()
         self.epoch_i_MI_hM_Y_lower.clear()
-        self.epoch_i_MI_hM_Y_lower_detail
+        self.epoch_i_MI_hM_Y_lower_detail.clear()
 
         self.epoch_i_MI_hM_X_upper.clear()
         self.epoch_i_MI_hM_Y_upper.clear()

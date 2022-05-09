@@ -51,8 +51,8 @@ def get_train_test_loader(Data_Set='CIFAR10'):
 
 
 def ATK(Model, Random_Start=False):
-    # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-    atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+    atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
     return atk
 
 
