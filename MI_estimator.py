@@ -149,7 +149,6 @@ class mutual_info_estimator(object):
         MI_hM_X_upper = []
         MI_hM_Y_upper = []
 
-
         MI_hM_X_bin = []
         MI_hM_Y_bin = []
 
@@ -177,7 +176,6 @@ class mutual_info_estimator(object):
 
         for layer_idx, layer_i_activations in enumerate(layer_activations):
             layer_i_lower_detail = []
-
             # -------- I(T;X), I(T;Y)  MINE --------
             """
             实践证明， MINE的效果非常不理想，超参数， 神经网络的设置是一个让人很头疼的问题
@@ -206,6 +204,7 @@ class mutual_info_estimator(object):
 
             # -------- I(T;X), I(T;Y)  upper and lower  --------
             # 最后一层输出 \hat{y} 也可以直接使用KDE来计算互信息, 因为 \hat{y} 仅仅只是预测值,不是真实的标签 y, 自然也可以当成隐藏层来计算互信息
+
             hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
 
             if self.DO_LOWER:
@@ -228,6 +227,7 @@ class mutual_info_estimator(object):
                     layer_i_lower_detail.append(Y_probs[y_i].item())
                     layer_i_lower_detail.append(hM_given_Y_i_lower)
 
+                layer_i_lower_detail.append(hM_lower)
                 MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
                 MI_hM_Y_lower_detail.append(layer_i_lower_detail)
 

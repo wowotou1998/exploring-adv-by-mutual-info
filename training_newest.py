@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 200
+Std_Epoch_Num = 3
 
 
 def get_train_test_loader(Data_Set='CIFAR10'):
