@@ -289,12 +289,11 @@ class net_cifar10(nn.Module):
             nn.Linear(256, 10)
         )
 
-
-        self.modules_to_hook = ('conv1',
-                                'conv2',
-                                'fc1',
-                                'fc2',
-                                'fc3')
+        self.modules_to_hook = ('seq.1',
+                                'seq.3',
+                                'seq.6',
+                                'seq.8',
+                                'seq2.4')
 
     def forward(self, x):
         r1 = self.seq(x)
