@@ -193,13 +193,17 @@ def loss_function(y_pred, y, mu, std):
     mu : [batch_size,z_dim]  
     std: [batch_size,z_dim] 
     """
+    import math
+    nats2bits = 1.0 / math.log(2)
     Batch_N = y.size(0) * 1.
+
     # 交叉熵损失 = -I(Z;Y)_lower_bound
     CE = F.cross_entropy(y_pred, y, reduction='mean')
-    izy_lower_bound = -CE
+    izy_lower_bound = -CE * nats2bits
+
     # KL信息损失 = I(Z;X)_upper_bound
     KL = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1) / Batch_N
-    izx_upper_bound = KL
+    izx_upper_bound = KL * nats2bits
     # 先相加后取平均
     return izy_lower_bound, izx_upper_bound, CE + beta * KL
 
@@ -218,6 +222,7 @@ def train_vib():
     print(vib)
 
     # Training
+    from collections import defaultdict
     measures = defaultdict(list)
     start_time = time.time()
 
@@ -226,12 +231,11 @@ def train_vib():
 
     for epoch in range(epochs):
         epoch_start_time = time.time()
-
         # exponential decay of learning rate every 2 epochs
         if epoch % 2 == 0 and epoch > 0:
             scheduler.step()
 
-        batch_loss = 0
+        loss_sum = 0
         acc_N = 0
         sample_N = 10000
         izy_lower_bound_total, izx_upper_bound_total = 0., 0.
@@ -256,7 +260,7 @@ def train_vib():
             izy_lower_bound_total += izy_lower_bound
             izx_upper_bound_total += izx_upper_bound
             # Save loss per batch
-            batch_loss += loss.item()
+            loss_sum += loss.item()
             # Save accuracy per batch
             y_pred = torch.argmax(y_pred, dim=1)
             acc_N += y_pred.eq(y.data).cpu().sum().item()
@@ -266,12 +270,16 @@ def train_vib():
         # Save average loss per epoch
         measures['izx_upper_bound'].append(izx_upper_bound_total / len(train_loader))
         # Save accuracy per epoch
+        measures['ave_loss'].append(loss_sum / len(train_loader))
         measures['accuracy'].append(acc_N / sample_N)
 
-        print("Epoch: {}/{}...".format(epoch + 1, epochs),
-              "izy/izx: {}/{}...".format(measures['izy_lower_bound'], measures['izx_upper_bound']),
-              "Loss: {:.4f}...".format(measures['total_loss'][-1]),
-              "Accuracy: {:.4f}...".format(measures['accuracy'][-1]),
-              "Time Taken: {:,.4f} seconds".format(time.time() - epoch_start_time))
+        print("Epoch: [%d]/[%d] " % (epoch + 1, epochs),
+              "izy/izx: [%.2f]/[%.2f] " % (measures['izy_lower_bound'][-1], measures['izx_upper_bound'][-1]),
+              "Ave Loss: [%.2f] " % (measures['ave_loss'][-1]),
+              "Accuracy: [%.2f] " % (measures['accuracy'][-1]),
+              "Time Taken: [%.2f] seconds " % (time.time() - epoch_start_time))
 
-    print("Total Time Taken: {:,.4f} seconds".format(time.time() - start_time))
+    print("Total Time Taken: [%.2f] seconds" % (time.time() - start_time))
+
+
+train_vib()
