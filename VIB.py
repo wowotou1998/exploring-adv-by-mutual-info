@@ -176,7 +176,7 @@ class DeepVIB(nn.Module):
 
 beta = 1e-3
 z_dim = 256
-epochs = 200
+epochs = 3
 batch_size = 128
 learning_rate = 1e-4
 decay_rate = 0.97
@@ -193,9 +193,13 @@ def loss_function(y_pred, y, mu, std):
     mu : [batch_size,z_dim]  
     std: [batch_size,z_dim] 
     """
-    CE = F.cross_entropy(y_pred, y, reduction='sum')
-    KL = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1)
-    return (beta * KL + CE) / y.size(0)
+    Batch_N = y.size(0) * 1.
+    # 交叉熵损失 = -I(Z;Y)_lower_bound
+    CE = F.cross_entropy(y_pred, y, reduction='mean')
+    # KL信息损失 = I(Z;X)_upper_bound
+    KL = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1) / Batch_N
+    # 先相加后取平均
+    return beta * KL + CE
 
 
 # Initialize Deep VIB
@@ -261,4 +265,3 @@ for epoch in range(epochs):
           "Time Taken: {:,.4f} seconds".format(time.time() - epoch_start_time))
 
 print("Total Time Taken: {:,.4f} seconds".format(time.time() - start_time))
-
