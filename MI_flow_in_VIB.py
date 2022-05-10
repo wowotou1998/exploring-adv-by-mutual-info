@@ -102,8 +102,6 @@ def get_train_data(data_set_name, batch_size):
 
 
 # Models
-
-
 class DeepVIB(nn.Module):
     def __init__(self, input_shape, output_shape, z_dim):
         """
@@ -181,8 +179,6 @@ batch_size = 128
 learning_rate = 1e-4
 decay_rate = 0.97
 n_classes = 10
-# Create DatatLoader 
-train_loader, test_loader = get_train_data(data_set_name='MNIST', batch_size=batch_size)
 
 
 # Loss function: Cross Entropy Loss (CE) + beta*KL divergence
@@ -208,11 +204,11 @@ def loss_function(y_pred, y, mu, std):
     return izy_lower_bound, izx_upper_bound, CE + beta * KL
 
 
-# Initialize Deep VIB
-vib = DeepVIB(1 * 28 * 28, n_classes, z_dim)
-
-
 def train_vib():
+    # Create DatatLoader
+    train_loader, test_loader = get_train_data(data_set_name='MNIST', batch_size=batch_size)
+    # Initialize Deep VIB
+    vib = DeepVIB(1 * 28 * 28, n_classes, z_dim)
     # Optimizer
     optimizer = torch.optim.Adam(vib.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=decay_rate)
@@ -280,6 +276,7 @@ def train_vib():
               "Time Taken: [%.2f] seconds " % (time.time() - epoch_start_time))
 
     print("Total Time Taken: [%.2f] seconds" % (time.time() - start_time))
+    return measures
 
 
-train_vib()
+analytic_data = train_vib()

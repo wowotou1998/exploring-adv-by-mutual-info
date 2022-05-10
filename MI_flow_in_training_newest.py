@@ -230,9 +230,10 @@ Model, Model_Name = VGG_s(), 'VGG_s_11'
 # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
+# Model, Model_Name = vgg11(pretrained=False)
 print("Model Structure\n", Model)
 
-Learning_Rate = 1e-1
+Learning_Rate = 1e-3
 
 # FC_2
 # modules_to_hook = (torch.nn.Tanh, torch.nn.ReLU)

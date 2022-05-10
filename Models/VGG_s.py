@@ -20,41 +20,41 @@ class VGG_s(nn.Module):
         super(VGG_s, self).__init__()
         self.features = nn.Sequential(
             # Stage 1
-            # TODO: convolutional layer, input channels 3, output channels 8, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 3, output channels 8, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 2
-            # TODO: convolutional layer, input channels 8, output channels 16, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 8, output channels 16, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 3
-            # TODO: convolutional layer, input channels 16, output channels 32, filter size 3
-            # TODO: convolutional layer, input channels 32, output channels 32, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 16, output channels 32, filter size 3
+            #  convolutional layer, input channels 32, output channels 32, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 4
-            # TODO: convolutional layer, input channels 32, output channels 64, filter size 3
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 32, output channels 64, filter size 3
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 5
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2)
         )
 
         self.classifier = nn.Sequential(
-            # TODO: fully-connected layer (64->64)
-            # TODO: fully-connected layer (64->10)
+            #  fully-connected layer (64->64)
+            #  fully-connected layer (64->10)
             nn.Linear(in_features=64, out_features=64),
             nn.ReLU(),
             nn.Linear(in_features=64, out_features=10),
@@ -63,7 +63,7 @@ class VGG_s(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(-1, 64)
+        x = x.view(x.size(0), 64)
         x = self.classifier(x)
         return x
 
@@ -80,21 +80,21 @@ def train(trainloader, net, criterion, optimizer, device, epochs=5):
             histogram += np.histogram(labels.numpy(), bins=np.shape(histogram)[0])[0]
             images = images.to(device)
             labels = labels.to(device)
-            # TODO: zero the parameter gradients
-            # TODO: forward pass
-            # TODO: backward pass
-            # TODO: optimize the network
+            #  zero the parameter gradients
+            #  forward pass
+            #  backward pass
+            #  optimize the network
             optimizer.zero_grad()
             scores = net.forward(images)
-            loss = criterion(scores,labels)
+            loss = criterion(scores, labels)
             loss.backward()
             optimizer.step()
             # print statistics
             running_loss += loss.item()
-            if i % 100 == 99:    # print every 2000 mini-batches
+            if i % 100 == 99:  # print every 2000 mini-batches
                 end = time.time()
                 print('[epoch %d, iter %5d] loss: %.3f eplased time %.3f' %
-                      (epoch + 1, i + 1, running_loss / 100, end-start))
+                      (epoch + 1, i + 1, running_loss / 100, end - start))
                 start = time.time()
                 running_loss = 0.0
         print(histogram)
@@ -119,9 +119,9 @@ def test(testloader, net, device):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
             for i in range(len(labels)):
-                matrix[labels[i],predicted[i]] += 1
+                matrix[labels[i], predicted[i]] += 1
     print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * correct / total))
+            100 * correct / total))
     print(matrix.numpy())
     return matrix.numpy()
 
@@ -144,14 +144,14 @@ def trainset_select(dataset, device, distribution=None):
         return distribution
     elif isinstance(distribution, int):
         distribution *= np.ones(np.shape(np.unique(labels)))
-    assert(np.shape(distribution)==np.shape(np.unique(labels)))
-    assert(np.all(distribution<=
-        np.histogram(labels, bins=np.shape(distribution)[0])[0]))
-    subset=[]
+    assert (np.shape(distribution) == np.shape(np.unique(labels)))
+    assert (np.all(distribution <=
+                   np.histogram(labels, bins=np.shape(distribution)[0])[0]))
+    subset = []
     for i in range(np.shape(labels)[0]):
-        if(distribution[labels[i]]>0):
+        if (distribution[labels[i]] > 0):
             subset.append(i)
-            distribution[labels[i]]-=1
+            distribution[labels[i]] -= 1
     return subset
 
 
@@ -160,7 +160,7 @@ def main(argv):
     print(device.type)
     torch.nn.Module.dump_patches = True
     torch.manual_seed(0)
-    if device.type=='cuda':
+    if device.type == 'cuda':
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
@@ -168,50 +168,50 @@ def main(argv):
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform)
+                                           download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=100,
-                                         shuffle=False)
+                                             shuffle=False)
 
-
-    if len(argv)==1:
+    if len(argv) == 1:
         net = torch.load('vgg.pt')
         print('load')
         filename = 'vgg'
-    elif argv[1]=='retrain':
-        assert(isinstance(argv[2], str) and argv[2].isnumeric())
-        if(len(argv)==3):
+    elif argv[1] == 'retrain':
+        assert (isinstance(argv[2], str) and argv[2].isnumeric())
+        if (len(argv) == 3):
             argv.append('5')
         print(argv[1], "subset=" + argv[2], "epoch=" + argv[3])
         trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                download=True, transform=transform)
+                                                download=True, transform=transform)
 
         trainset = torch.utils.data.Subset(trainset,
-            trainset_select(trainset, device, distribution=
-            50 * int(argv[2]) * np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])))
-
+                                           trainset_select(trainset, device, distribution=
+                                           50 * int(argv[2]) * np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])))
 
         trainloader = torch.utils.data.DataLoader(trainset,
-                    batch_size=100, shuffle=True)
+                                                  batch_size=100, shuffle=True)
 
         net = VGG_s().to(device)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(net.parameters(), lr=0.001)
         train(trainloader, net, criterion, optimizer, device, epochs=int(argv[3]));
         torch.save(net, 'vgg.pt')
-        filename = 'vgg-epoch={}-subset={}'.format(argv[3],argv[2])
+        filename = 'vgg-epoch={}-subset={}'.format(argv[3], argv[2])
     else:
         raise NameError('invalid mode')
 
     confusion_mtx = test(testloader, net, device)
-    plt.imsave(filename+'.pdf', confusion_mtx)
+    plt.imsave(filename + '.pdf', confusion_mtx)
     return confusion_mtx
 
 
-
-
-if __name__== "__main__":
+if __name__ == "__main__":
     import sys
-    assert(sys.argv[0][-6:]=='vgg.py')
-    main(sys.argv)
+
+    # assert (sys.argv[0][-6:] == 'vgg.py')
+    # main(sys.argv)
+    vgg = VGG_s()
+    x = torch.rand((2, 3, 32, 32))
+    y = torch.nn.Softmax(vgg(x))
+    print(y)
