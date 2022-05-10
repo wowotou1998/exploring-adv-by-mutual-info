@@ -338,41 +338,41 @@ class VGG_s(nn.Module):
         super(VGG_s, self).__init__()
         self.features = nn.Sequential(
             # Stage 1
-            # TODO: convolutional layer, input channels 3, output channels 8, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 3, output channels 8, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 2
-            # TODO: convolutional layer, input channels 8, output channels 16, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 8, output channels 16, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 3
-            # TODO: convolutional layer, input channels 16, output channels 32, filter size 3
-            # TODO: convolutional layer, input channels 32, output channels 32, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 16, output channels 32, filter size 3
+            #  convolutional layer, input channels 32, output channels 32, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 4
-            # TODO: convolutional layer, input channels 32, output channels 64, filter size 3
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 32, output channels 64, filter size 3
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2),
             # Stage 5
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: convolutional layer, input channels 64, output channels 64, filter size 3
-            # TODO: max-pooling layer, size 2
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  convolutional layer, input channels 64, output channels 64, filter size 3
+            #  max-pooling layer, size 2
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
             nn.MaxPool2d(kernel_size=2)
         )
 
         self.classifier = nn.Sequential(
-            # TODO: fully-connected layer (64->64)
-            # TODO: fully-connected layer (64->10)
+            #  fully-connected layer (64->64)
+            #  fully-connected layer (64->10)
             nn.Linear(in_features=64, out_features=64),
             nn.ReLU(),
             nn.Linear(in_features=64, out_features=10),

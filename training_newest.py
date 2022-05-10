@@ -461,6 +461,11 @@ def training(origin_model, Enable_Adv_Training):
     return analytic_data
 
 
+# Random_Seed = 123
+# torch.manual_seed(Random_Seed)
+# torch.cuda.manual_seed(Random_Seed)  # 设置当前GPU的随机数生成种子
+# torch.cuda.manual_seed_all(Random_Seed)  # 设置所有GPU的随机数生成种子
+
 analytic_data = training(Model, Enable_Adv_Training=False)
 std_estimator.clear_all()
 adv_estimator.clear_all()

@@ -196,72 +196,82 @@ def loss_function(y_pred, y, mu, std):
     Batch_N = y.size(0) * 1.
     # 交叉熵损失 = -I(Z;Y)_lower_bound
     CE = F.cross_entropy(y_pred, y, reduction='mean')
+    izy_lower_bound = -CE
     # KL信息损失 = I(Z;X)_upper_bound
     KL = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1) / Batch_N
+    izx_upper_bound = KL
     # 先相加后取平均
-    return beta * KL + CE
+    return izy_lower_bound, izx_upper_bound, CE + beta * KL
 
 
 # Initialize Deep VIB
 vib = DeepVIB(1 * 28 * 28, n_classes, z_dim)
 
-# Optimiser
-optimiser = torch.optim.Adam(vib.parameters(), lr=learning_rate)
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimiser, gamma=decay_rate)
 
-# Send to GPU if available
-vib.to(device)
+def train_vib():
+    # Optimizer
+    optimizer = torch.optim.Adam(vib.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=decay_rate)
+    # Send to GPU if available
+    vib.to(device)
+    print("Device: ", device)
+    print(vib)
 
-print("Device: ", device)
-print(vib)
+    # Training
+    measures = defaultdict(list)
+    start_time = time.time()
 
-# Training
-measures = defaultdict(list)
-start_time = time.time()
+    # put Deep VIB into train mode 
+    vib.train()
 
-# put Deep VIB into train mode 
-vib.train()
+    for epoch in range(epochs):
+        epoch_start_time = time.time()
 
-for epoch in range(epochs):
-    epoch_start_time = time.time()
+        # exponential decay of learning rate every 2 epochs
+        if epoch % 2 == 0 and epoch > 0:
+            scheduler.step()
 
-    # exponential decay of learning rate every 2 epochs
-    if epoch % 2 == 0 and epoch > 0:
-        scheduler.step()
+        batch_loss = 0
+        acc_N = 0
+        sample_N = 10000
+        izy_lower_bound_total, izx_upper_bound_total = 0., 0.
+        for _, (X, y) in enumerate(train_loader):
+            X = X.to(device)
+            y = y.to(device)
 
-    batch_loss = 0
-    batch_accuracy = 0
-    for _, (X, y) in enumerate(train_loader):
-        X = X.to(device)
-        y = y.to(device)
+            # Zero accumulated gradients
+            vib.zero_grad()
 
-        # Zero accumulated gradients
-        vib.zero_grad()
+            # forward pass through Deep VIB
+            y_pred, mu, std = vib(X)
 
-        # forward pass through Deep VIB
-        y_pred, mu, std = vib(X)
+            # Calculate loss
+            izy_lower_bound, izx_upper_bound, loss = loss_function(y_pred, y, mu, std)
+            # Backpropagation: calculating gradients
+            loss.backward()
+            # Update parameters of generator
+            optimizer.step()
 
-        # Calculate loss
-        loss = loss_function(y_pred, y, mu, std)
-        # Backpropogation: calculating gradients
-        loss.backward()
-        # Update parameters of generator
-        optimiser.step()
+            # save mutual info per batch
+            izy_lower_bound_total += izy_lower_bound
+            izx_upper_bound_total += izx_upper_bound
+            # Save loss per batch
+            batch_loss += loss.item()
+            # Save accuracy per batch
+            y_pred = torch.argmax(y_pred, dim=1)
+            acc_N += y_pred.eq(y.data).cpu().sum().item()
 
-        # Save loss per batch
-        batch_loss += loss.item() * X.size(0)
-        # Save accuracy per batch
-        y_pred = torch.argmax(y_pred, dim=1)
-        batch_accuracy += y_pred.eq(y.data).cpu().sum().item()
+        # Save average mutual info per epoch
+        measures['izy_lower_bound'].append(izy_lower_bound_total / len(train_loader))
+        # Save average loss per epoch
+        measures['izx_upper_bound'].append(izx_upper_bound_total / len(train_loader))
+        # Save accuracy per epoch
+        measures['accuracy'].append(acc_N / sample_N)
 
-        # Save losses per epoch
-    measures['total_loss'].append(batch_loss / y.shape[0])
-    # Save accuracy per epoch
-    measures['accuracy'].append(batch_accuracy / y.shape[0])
+        print("Epoch: {}/{}...".format(epoch + 1, epochs),
+              "izy/izx: {}/{}...".format(measures['izy_lower_bound'], measures['izx_upper_bound']),
+              "Loss: {:.4f}...".format(measures['total_loss'][-1]),
+              "Accuracy: {:.4f}...".format(measures['accuracy'][-1]),
+              "Time Taken: {:,.4f} seconds".format(time.time() - epoch_start_time))
 
-    print("Epoch: {}/{}...".format(epoch + 1, epochs),
-          "Loss: {:.4f}...".format(measures['total_loss'][-1]),
-          "Accuracy: {:.4f}...".format(measures['accuracy'][-1]),
-          "Time Taken: {:,.4f} seconds".format(time.time() - epoch_start_time))
-
-print("Total Time Taken: {:,.4f} seconds".format(time.time() - start_time))
+    print("Total Time Taken: {:,.4f} seconds".format(time.time() - start_time))
