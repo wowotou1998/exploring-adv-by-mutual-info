@@ -24,7 +24,7 @@ Enable_Show = True
 Train_Batch_Size = 128
 Forward_Size = 1000
 Forward_Repeat = 5
-Std_Epoch_Num = 20
+Std_Epoch_Num = 10
 
 
 def get_train_test_loader(Data_Set='CIFAR10'):
@@ -222,12 +222,11 @@ from torchvision.models import *
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
 from Models.CIFAR10 import Alex_1_cifar10, WideResNet, VGG_s
 
-# Model, Model_Name = FC_2(Activation_F=nn.ReLU()), \
-#                                    FC_2(Activation_F=nn.ReLU()), 'FC_2'
+Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
 # Model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
 # Model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
 # Model, Model_Name = VGG_s(), 'VGG_s_11'
-Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+# Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
 # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 # Model, Model_Name = vgg11(pretrained=False)
@@ -242,7 +241,7 @@ adv_estimator = mutual_info_estimator(Model.modules_to_hook, By_Layer_Name=False
 
 Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
 
-Train_Loader, Test_Loader = get_train_test_loader(Data_Set='CIFAR10')
+Train_Loader, Test_Loader = get_train_test_loader(Data_Set='MNIST')
 
 
 @torch.no_grad()
@@ -343,6 +342,7 @@ def acc_and_mutual_info_calculate(Model, Keep_Clean):
 
 # this training function is only for classification task
 def training(origin_model, Enable_Adv_Training):
+    global Std_Epoch_Num
     import copy
 
     train_loss = []
@@ -363,7 +363,7 @@ def training(origin_model, Enable_Adv_Training):
                               # momentum=0.9,
                               weight_decay=2e-4
                               )
-    milestones = [50, 100]
+    milestones = [int(Std_Epoch_Num * 0.33) + 1, int(Std_Epoch_Num * 0.66) + 1]
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 
     criterion = nn.CrossEntropyLoss()

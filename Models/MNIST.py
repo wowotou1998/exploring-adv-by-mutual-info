@@ -59,8 +59,12 @@ class FC_2(nn.Module):
         # 最后是三个全连接层
         self.seq = nn.Sequential(
             nn.Linear(1 * 28 * 28, 784),
+            nn.Linear(784, 10),
+            nn.Linear(10, 784),
             Activation_F,
             nn.Linear(784, 1024),
+            nn.Linear(1024, 10),
+            nn.Linear(10, 1024),
             Activation_F,
             nn.Linear(1024, 20),
             Activation_F,
@@ -70,6 +74,11 @@ class FC_2(nn.Module):
             Activation_F,
             nn.Linear(20, 10),
         )
+        self.modules_to_hook = ('seq.1',
+                                'seq.5',
+                                'seq.8',
+                                'seq.12',
+                                'seq.14')
 
     def forward(self, x):
         x = x.view(x.size(0), -1)

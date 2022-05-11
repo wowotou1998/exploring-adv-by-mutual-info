@@ -7,6 +7,9 @@ from utils import *
 import pickle
 from matplotlib.lines import Line2D
 
+# mpl.rcParams['font.sans-serif'] = ['Times New Roman']
+# mpl.rcParams['font.sans-serif'] = ['Arial']
+mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
 mpl.rcParams['figure.constrained_layout.use'] = True
 
@@ -105,11 +108,11 @@ def plot_mutual_info(Enable_Adv_Training):
             # axs[0].set_xlim(0, 2)
             if j < 2:
                 axs[i][j].set_xlabel('layers')
-                axs[i][j].set_ylabel('I(T;X)')
+                axs[i][j].set_ylabel(r'$I(T;X)$')
             # axs[0].grid(True)
             else:
                 axs[i][j].set_xlabel('layers')
-                axs[i][j].set_ylabel('I(T;Y)')
+                axs[i][j].set_ylabel(r'$I(T;Y)$')
             # axs[1].grid(True)
 
     # 开始，结束，步长
@@ -170,39 +173,45 @@ def plot_mutual_info(Enable_Adv_Training):
     #             )
     fig.savefig('mutual_info_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
 
+    # -------------------------------------------Mutual Information Detail---------------------
     fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
     # clean examples info flow
     data = numpy.array(std.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[0]):
+        ax.set_xlabel('epochs')
+        ax.set_title('Std Layer %d' % layer_i)
+
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
             temp_data = data[..., layer_i, 2 * label_i - 1]
-            ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
+            ax.plot(Epochs, temp_data, label=r'$H(T_i|y_%d)$' % (label_i))
         # plot the H(T_i) lower
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H(T_%d) Lower$' % (layer_i))
-        ax.set_xlabel('epochs')
+        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
+
         if layer_i == 0:
             ax.legend(ncol=2)
-        ax.set_title('std')
 
     # adv example info flow
     data = numpy.array(adv.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[1]):
+        ax.set_xlabel('epochs')
+        ax.set_title('Adv Layer %d' % layer_i)
+
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
             temp_data = data[..., layer_i, 2 * label_i - 1]
             ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
             #     plot the H(T_i) lower
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H(T_%d) Lower$' % (layer_i))
-        ax.set_xlabel('epochs')
-        if layer_i == 0:
-            ax.legend(ncol=2)
-        ax.set_title('adv')
-    fig.suptitle('I(T;Y) detail')
+        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
+
+    title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
+        Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
+    )
+    fig.suptitle(title)
     plt.show()
     fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
     print("Work has done!")
 
 
-# plot_mutual_info(Enable_Adv_Training=False)
-plot_mutual_info(Enable_Adv_Training=True)
+plot_mutual_info(Enable_Adv_Training=False)
+# plot_mutual_info(Enable_Adv_Training=True)

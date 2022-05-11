@@ -112,6 +112,7 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         return torch.add(out, res)
 
+
 # NetworkBlock 的作用只想当与一个函数, 用来产生网络中几个大组件模块
 class NetworkBlock(nn.Module):
     def __init__(self, layer_repeat, in_planes, out_planes, block, stride, dropRate=0.0):
@@ -165,10 +166,11 @@ class WideResNet(nn.Module):
                 m.bias.data.zero_()
 
         self.modules_to_hook = ('conv1',
-                                'block1.layer.0.relu2',
-                                'block2.layer.0.relu2',
-                                'block3.layer.0.relu2',
+                                'block1.layer.0.relu1',
+                                'block2.layer.0.relu1',
+                                'block3.layer.0.relu1',
                                 'fc')
+        # self.modules_to_hook = (torch.nn.LeakyReLU,)
 
     def forward(self, x, _eval=False):
         if _eval:
