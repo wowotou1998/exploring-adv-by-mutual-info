@@ -10,7 +10,7 @@ results_pdf/
 *.png
 *.jpg
 *.pkl
-!*.gitkeep
+!.gitkeep
 
 
 # Byte-compiled / optimized / DLL files
