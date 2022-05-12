@@ -33,7 +33,7 @@ class Trainer():
         self.Std_Epoch_Num = 5
         self.Train_Batch_Size = 128
         self.Forward_Size = 500
-        self.Forward_Repeat = 2
+        self.Forward_Repeat = 5
         self.Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
@@ -320,6 +320,17 @@ if __name__ == '__main__':
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
     from Models.CIFAR10 import Alex_1_cifar10, WideResNet, VGG_s
+    import argparse
+
+    parser = argparse.ArgumentParser(description='training arguments with PyTorch')
+    parser.add_argument('--gpu_id', default=0, type=int, help='The GPU id.')
+    parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
+    parser.add_argument('--epochs', default=50, type=int, help='The epochs.')
+    parser.add_argument('--lr', default=1e-3, type=float, help='The learning rate.')
+    parser.add_argument('--load_model_args', default=True, type=bool, help='Load_model_args.')
+    parser.add_argument('--model', default='VGG16', type=bool, help='model.')
+    parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
+    args = parser.parse_args()
 
     # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
     # Model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
@@ -336,17 +347,7 @@ if __name__ == '__main__':
     Trainer_0.training(Enable_Adv_Training=True)
 
     # pass
-# import argparse
-# 
-# parser = argparse.ArgumentParser(description='training arguments with PyTorch')
-# parser.add_argument('--gpu_id', default=0, type=int, help='The GPU id.')
-# parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
-# parser.add_argument('--epochs', default=50, type=int, help='The epochs.')
-# parser.add_argument('--lr', default=1e-3, type=float, help='The learning rate.')
-# parser.add_argument('--load_model_args', default=True, type=bool, help='Load_model_args.')
-# parser.add_argument('--model', default='VGG16', type=bool, help='model.')
-# parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
-# args = parser.parse_args()
+
 
 """
     def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
