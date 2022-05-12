@@ -14,14 +14,23 @@ def load_model(model, file_name):
 
 
 def save_model(model, file_name):
+    # 如果文件路径不存在则创建
+    if not os.path.exists(file_name):
+        os.makedirs(file_name)
     torch.save(model.state_dict(), file_name)
 
 
-def save_array_dict(data, filename):
-    np.save("./Checkpoint/%s.npy" % str(filename), data)
+def save_array_dict(data, file_name):
+    # 如果文件路径不存在则创建
+    if not os.path.exists(file_name):
+        os.makedirs(file_name)
+    np.save("./Checkpoint/%s.npy" % str(file_name), data)
 
 
 def load_array_dict(file_name, Type='Array'):
+    # 如果文件路径不存在则创建
+    if not os.path.exists(file_name):
+        os.makedirs(file_name)
     if Type == 'Array':
         k = np.load("./Checkpoint/%s.npy" % str(file_name))
     else:
