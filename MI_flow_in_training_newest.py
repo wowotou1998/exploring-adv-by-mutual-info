@@ -332,13 +332,13 @@ if __name__ == '__main__':
     import argparse
 
     # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
-    Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
+    # Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
     # Model, Model_Name = net_cifar10(), 'net_cifar10'
     # Model, Model_Name = VGG_s(), 'VGG_s_11'
     # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
     # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
     # Model, Model_Name = vgg11(pretrained=False)
-    # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
+    Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
 
     parser = argparse.ArgumentParser(description='training arguments with PyTorch')
     parser.add_argument('--Std_Epoch_Num', default=30, type=int, help='The epochs.')
