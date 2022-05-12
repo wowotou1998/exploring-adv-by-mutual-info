@@ -39,10 +39,14 @@ class Trainer():
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
 
-    def ATK(self, Model, Random_Start=False):
+    def Train_Attack(self, Model, Random_Start=False):
         atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
+    # def Test_Attack(self, Model, Random_Start=False):
+    #     atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+    #     # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+    #     return atk
 
     def get_train_test_loader(self, Data_Set='CIFAR10'):
         data_tf_cifar10 = transforms.Compose([
@@ -88,7 +92,7 @@ class Trainer():
 
     @torch.no_grad()
     def get_clean_or_adv_image(self, Model, Keep_Clean):
-        atk = self.ATK(Model, Random_Start=False)
+        atk = self.Train_Attack(Model, Random_Start=False)
 
         batch_images, batch_labels = next(iter(self.Test_Loader))
         batch_images = batch_images.to(self.Device)
@@ -240,7 +244,7 @@ class Trainer():
                 batch_images = batch_images.to(self.Device)
 
                 if Enable_Adv_Training:
-                    atk = self.ATK(Model, Random_Start=True)
+                    atk = self.Train_Attack(Model, Random_Start=True)
                     batch_images = atk(batch_images, batch_labels)
 
                 outputs = Model(batch_images)
