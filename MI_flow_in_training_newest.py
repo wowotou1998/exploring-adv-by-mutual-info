@@ -43,6 +43,7 @@ class Trainer():
         atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
+
     # def Test_Attack(self, Model, Random_Start=False):
     #     atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
     #     # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
@@ -320,6 +321,11 @@ class Trainer():
 
 
 if __name__ == '__main__':
+    check_dir = ['DataSet/MNIST', 'DataSet/CIFAR10', 'Checkpoint']
+    for dir in check_dir:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
     from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
