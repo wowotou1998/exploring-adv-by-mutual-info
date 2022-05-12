@@ -1,7 +1,7 @@
 #my ignore
 # 忽略 DataSet/MNIST/ 目录下所有的文件， 但不忽略文件夹名
-DataSet/MNIST/
-DataSet/CIFAR10/
+DataSet/MNIST
+DataSet/CIFAR10
 Checkpoint/
 results_pdf/
 *.pth
