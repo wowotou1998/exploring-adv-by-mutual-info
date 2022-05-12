@@ -345,7 +345,7 @@ if __name__ == '__main__':
     parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
-    parser.add_argument('--GPU_i', default=3, type=int, help='The GPU id.')
+    parser.add_argument('--GPU_i', default=0, type=int, help='The GPU id.')
     # parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
     # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
 
