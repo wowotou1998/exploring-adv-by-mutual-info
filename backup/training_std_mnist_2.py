@@ -238,9 +238,9 @@ Learning_Rate = 0.1
 # Activation_F = 'Tanh'
 Activation_F = 'ReLU'
 activation_f = torch.nn.ReLU() if Activation_F == 'ReLU' else torch.nn.Tanh()
-model = ModelSet.Alex_1_cifar10()
+model = ModelSet.LeNet_cifar10()
 # model = ModelSet.FC_Sigmoid(activation_f)
-Model_Name = 'Alex_1_cifar10'
+Model_Name = 'LeNet_cifar10'
 print("Model Structure ", model)
 acc_record, loss_record, best_acc = training(model=model,
                                              train_data_loader=train_loader,

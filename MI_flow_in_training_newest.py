@@ -26,19 +26,18 @@ import torch.nn.functional as F
 
 
 class Trainer():
-    def __init__(self, Origin_Model, Model_Name, Data_Set):
+    def __init__(self, Origin_Model, Model_Name, Data_Set, args):
         self.Origin_Model = Origin_Model
         self.Model_Name = Model_Name
-        self.Enable_Show = True
-        self.Std_Epoch_Num = 5
+        # self.Enable_Show = True
+        self.Std_Epoch_Num = args.Std_Epoch_Num
+        self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
+        self.Learning_Rate = args.Learning_Rate
         self.Train_Batch_Size = 128
-        self.Forward_Size = 500
-        self.Forward_Repeat = 5
         self.Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
-        self.Learning_Rate = 1e-1
 
     def ATK(self, Model, Random_Start=False):
         atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
@@ -273,8 +272,8 @@ class Trainer():
             train_acc.append(epoch_train_acc)
 
             # print some data
-            print('epoch_i[%d], '
-                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f] '
+            print('epoch_i[%d]\n'
+                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]\n'
                   'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
                   % (epoch_i + 1,
                      train_loss_sum / len(self.Train_Loader), epoch_test_clean_loss, epoch_test_adv_loss,
@@ -319,35 +318,35 @@ class Trainer():
 if __name__ == '__main__':
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-    from Models.CIFAR10 import Alex_1_cifar10, WideResNet, VGG_s
+    from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
     import argparse
 
-    parser = argparse.ArgumentParser(description='training arguments with PyTorch')
-    parser.add_argument('--gpu_id', default=0, type=int, help='The GPU id.')
-    parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
-    parser.add_argument('--epochs', default=50, type=int, help='The epochs.')
-    parser.add_argument('--lr', default=1e-3, type=float, help='The learning rate.')
-    parser.add_argument('--load_model_args', default=True, type=bool, help='Load_model_args.')
-    parser.add_argument('--model', default='VGG16', type=bool, help='model.')
-    parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
-    args = parser.parse_args()
-
     # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
-    # Model, Model_Name = Alex_1_cifar10(), 'Alex_1_cifar10'
-    # Model, Model_Name = ModelSet.net_cifar10(), 'net_cifar10'
+    Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
+    # Model, Model_Name = net_cifar10(), 'net_cifar10'
     # Model, Model_Name = VGG_s(), 'VGG_s_11'
     # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
     # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
     # Model, Model_Name = vgg11(pretrained=False)
-    Model, Model_Name, Data_Set = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), \
-                                  'WideResNet', \
-                                  'CIFAR10'
-    Trainer_0 = Trainer(Model, Model_Name, Data_Set)
+    # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
+
+    parser = argparse.ArgumentParser(description='training arguments with PyTorch')
+    parser.add_argument('--Std_Epoch_Num', default=60, type=int, help='The epochs.')
+    parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
+    parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
+    # parser.add_argument('--gpu_id', default=0, type=int, help='The GPU id.')
+    # parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
+    # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
+
+    args = parser.parse_args()
+
+    Data_Set = 'CIFAR10'
+    Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
     Trainer_0.training(Enable_Adv_Training=False)
     Trainer_0.training(Enable_Adv_Training=True)
 
     # pass
-
 
 """
     def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):

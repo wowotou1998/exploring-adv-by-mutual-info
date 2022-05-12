@@ -75,8 +75,8 @@ def plot_mutual_info(Enable_Adv_Training):
                     color=c, marker='^',
                     linestyle='--', linewidth=1,
                     )
-        axs[0].set_ylim((-0.5, 13))
-        axs[1].set_ylim((-0.5, 13))
+        # axs[0].set_ylim((-0.5, 13))
+        # axs[1].set_ylim((-0.5, 13))
 
         axs[2].plot(Layer_Name, std_I_TY_epoch_i,
                     color=c, marker='o',
@@ -86,8 +86,8 @@ def plot_mutual_info(Enable_Adv_Training):
                     color=c, marker='^',
                     linestyle='--', linewidth=1,
                     )
-        axs[2].set_ylim((-0.5, 4))
-        axs[3].set_ylim((-0.5, 4))
+        # axs[2].set_ylim((-0.5, 4))
+        # axs[3].set_ylim((-0.5, 4))
 
         # axs[2].set_title('adv_' + MI_Type)
         # axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
@@ -213,5 +213,5 @@ def plot_mutual_info(Enable_Adv_Training):
     print("Work has done!")
 
 
-# plot_mutual_info(Enable_Adv_Training=False)
-# plot_mutual_info(Enable_Adv_Training=True)
+plot_mutual_info(Enable_Adv_Training=False)
+plot_mutual_info(Enable_Adv_Training=True)
