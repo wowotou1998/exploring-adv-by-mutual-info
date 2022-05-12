@@ -59,12 +59,12 @@ class Trainer():
         ])
 
         if Data_Set == 'CIFAR10':
-            train_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
+            train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
                                              download=True)
-            test_dataset = datasets.CIFAR10(root='../DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
         else:
-            train_dataset = datasets.MNIST(root='../DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
-            test_dataset = datasets.MNIST(root='../DataSet/MNIST', train=False, transform=data_tf_mnist)
+            train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
+            test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
 
         Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)

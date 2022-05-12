@@ -1,6 +1,9 @@
 #my ignore
-#Checkpoint/
-#results_pdf/
+# 忽略 DataSet/MNIST/ 目录下所有的文件， 但不忽略文件夹名
+DataSet/MNIST/
+DataSet/CIFAR10/
+Checkpoint/
+results_pdf/
 *.pth
 *.npy
 *.pdf
