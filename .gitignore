@@ -11,7 +11,7 @@ results_pdf/
 *.jpg
 *.pkl
 !.gitkeep
-
+!.gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
