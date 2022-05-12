@@ -34,7 +34,7 @@ class Trainer():
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
         self.Learning_Rate = args.Learning_Rate
         self.Train_Batch_Size = 128
-        self.Device = torch.device("cuda:%d" % (0) if torch.cuda.is_available() else "cpu")
+        self.Device = torch.device("cuda:%d" % (args.GPU_i) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
@@ -44,10 +44,10 @@ class Trainer():
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
-    # def Test_Attack(self, Model, Random_Start=False):
-    #     atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-    #     # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
-    #     return atk
+    def Test_Attack(self, Model, Random_Start=False):
+        atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+        return atk
 
     def get_train_test_loader(self, Data_Set='CIFAR10'):
         data_tf_cifar10 = transforms.Compose([
@@ -93,7 +93,7 @@ class Trainer():
 
     @torch.no_grad()
     def get_clean_or_adv_image(self, Model, Keep_Clean):
-        atk = self.Train_Attack(Model, Random_Start=False)
+        atk = self.Test_Attack(Model, Random_Start=False)
 
         batch_images, batch_labels = next(iter(self.Test_Loader))
         batch_images = batch_images.to(self.Device)
@@ -107,7 +107,7 @@ class Trainer():
                 return adv_images, batch_labels
 
     @torch.no_grad()
-    def acc_and_mutual_info_calculate(self, Model, Keep_Clean):
+    def calculate_acc_and_mutual_info(self, Model, Keep_Clean):
         # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
         # a = list[-1]就是最后一个元素
         Model.eval()
@@ -229,8 +229,8 @@ class Trainer():
 
             # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
             # if (epoch_i + 1) % 3 == 0:
-            epoch_test_clean_acc, epoch_test_clean_loss = self.acc_and_mutual_info_calculate(Model, Keep_Clean=True)
-            epoch_test_adv_acc, epoch_test_adv_loss = self.acc_and_mutual_info_calculate(Model, Keep_Clean=False)
+            epoch_test_clean_acc, epoch_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
+            epoch_test_adv_acc, epoch_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
             # 在验证集上的干净样本准确率，对抗样本准确率,loss
             test_clean_acc.append(epoch_test_clean_acc)
             test_adv_acc.append(epoch_test_adv_acc)
@@ -341,11 +341,11 @@ if __name__ == '__main__':
     # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
 
     parser = argparse.ArgumentParser(description='training arguments with PyTorch')
-    parser.add_argument('--Std_Epoch_Num', default=60, type=int, help='The epochs.')
+    parser.add_argument('--Std_Epoch_Num', default=30, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
-    # parser.add_argument('--gpu_id', default=0, type=int, help='The GPU id.')
+    parser.add_argument('--GPU_i', default=0, type=int, help='The GPU id.')
     # parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
     # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
 
