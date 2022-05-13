@@ -30,19 +30,19 @@ line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', mar
 # ax.legend(custom_lines, ['Cold', 'Medium', 'Hot'])
 
 
-def plot_mutual_info(Enable_Adv_Training):
+def plot_mutual_info(Model_Name, Enable_Adv_Training):
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-    with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'rb') as f:
+    with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         basic_info = pickle.load(f)
-    with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'rb') as f:
+    with open('./Checkpoint/%s/loss_and_acc_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         analytic_data = pickle.load(f)
-    with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'rb') as f:
+    with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         std = pickle.load(f)
-    with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'rb') as f:
+    with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         adv = pickle.load(f)
 
     Forward_Size, Forward_Repeat = basic_info['Forward_Size'], basic_info['Forward_Repeat']
-    Model_Name = basic_info['Model']
+    # Model_Name = basic_info['Model']
     Activation_F = 'relu'
     Learning_Rate = 0.08
 
@@ -213,5 +213,6 @@ def plot_mutual_info(Enable_Adv_Training):
     print("Work has done!")
 
 
-plot_mutual_info(Enable_Adv_Training=False)
-plot_mutual_info(Enable_Adv_Training=True)
+Model_Name = 'LeNet_cifar10'
+plot_mutual_info(Model_Name, Enable_Adv_Training=False)
+plot_mutual_info(Model_Name, Enable_Adv_Training=True)
