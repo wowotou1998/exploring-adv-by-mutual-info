@@ -75,6 +75,10 @@ class Trainer():
     def save_mutual_info_data(self, std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
         Model_Name, Forward_Size, Forward_Repeat = self.Model_Name, self.Forward_Size, self.Forward_Repeat
+        dir = 'Checkpoint/%s' % Model_Name
+        # 对于每一个模型产生的数据, 使用一个文件夹单独存放
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
         basic_info = {'Model': Model_Name,
                       'Enable_Adv_Training': Enable_Adv_Training,
@@ -83,13 +87,13 @@ class Trainer():
                       }
 
         std, adv = std_estimator, adv_estimator
-        with open('./Checkpoint/basic_info_%s.pkl' % Is_Adv_Training, 'wb') as f:
+        with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(basic_info, f)
-        with open('./Checkpoint/loss_and_acc_%s.pkl' % Is_Adv_Training, 'wb') as f:
+        with open('./Checkpoint/%s/loss_and_acc_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(analytic_data, f)
-        with open('./Checkpoint/loss_and_mutual_info_%s_std.pkl' % Is_Adv_Training, 'wb') as f:
+        with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(std, f)
-        with open('./Checkpoint/loss_and_mutual_info_%s_adv.pkl' % Is_Adv_Training, 'wb') as f:
+        with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(adv, f)
 
     @torch.no_grad()
