@@ -398,10 +398,10 @@ class VGG_s(nn.Module):
         self.classifier = nn.Sequential(
             #  fully-connected layer (64->64)
             #  fully-connected layer (64->10)
-            # nn.Linear(in_features=64, out_features=64),
-            # nn.ReLU(),
+            nn.Linear(in_features=64, out_features=64),
+            nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(in_features=64, out_features=10),
-            # nn.ReLU()
         )
 
         # self._initialize_weights()

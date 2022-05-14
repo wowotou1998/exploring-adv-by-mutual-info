@@ -33,7 +33,7 @@ class Trainer():
         self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
         self.Learning_Rate = args.Learning_Rate
-        self.Train_Batch_Size = 128
+        self.Train_Batch_Size = args.Train_Batch_Size
         self.Device = torch.device("cuda:%d" % (args.GPU_i) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
@@ -337,9 +337,9 @@ if __name__ == '__main__':
     import argparse
 
     # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
-    Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
+    # Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
     # Model, Model_Name = net_cifar10(), 'net_cifar10'
-    # Model, Model_Name = VGG_s(), 'VGG_s_11'
+    Model, Model_Name = VGG_s(), 'VGG_s_11'
     # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
     # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
     # Model, Model_Name = vgg11(pretrained=False)
@@ -350,8 +350,8 @@ if __name__ == '__main__':
     parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
-    parser.add_argument('--GPU_i', default=0, type=int, help='The GPU id.')
-    # parser.add_argument('--batch_size', default=128, type=int, help='The batch_size.')
+    parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
+    parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
 
     args = parser.parse_args()
