@@ -226,7 +226,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The epochs.')
+    parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
 
     args = parser.parse_args()
     Model_Name = args.Model_Name
