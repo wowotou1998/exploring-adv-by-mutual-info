@@ -210,7 +210,7 @@ class Trainer():
             optimizer = optim.SGD(Model.parameters(),
                                   lr=self.Learning_Rate,
                                   momentum=0.9,
-                                  weight_decay=2e-4
+                                  # weight_decay=2e-4
                                   )
         milestones = [int(self.Std_Epoch_Num * 0.2) + 1, int(self.Std_Epoch_Num * 0.6) + 1]
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
