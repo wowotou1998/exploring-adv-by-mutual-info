@@ -231,4 +231,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Model_Name = args.Model_Name
     plot_mutual_info(Model_Name, Enable_Adv_Training=False)
-    # plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+    plot_mutual_info(Model_Name, Enable_Adv_Training=True)

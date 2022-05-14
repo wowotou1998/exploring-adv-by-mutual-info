@@ -412,7 +412,7 @@ class VGG_s(nn.Module):
         #                         'features.9',
         #                         'features.12',
         #                         'classifier.3')
-        self.modules_to_hook = (torch.nn.ReLU,)
+        self.modules_to_hook = (torch.nn.MaxPool2d, torch.nn.Linear)
 
     def _initialize_weights(self):
         print('Initialize weights')

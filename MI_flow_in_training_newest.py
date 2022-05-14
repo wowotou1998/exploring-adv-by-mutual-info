@@ -45,7 +45,7 @@ class Trainer():
         return atk
 
     def Test_Attack(self, Model, Random_Start=False):
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
@@ -347,7 +347,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
-    parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
+    parser.add_argument('--Learning_Rate', default=1e-2, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
