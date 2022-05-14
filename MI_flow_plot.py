@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy
 import numpy as np
 from pylab import mpl
 import datetime
 from utils import *
 import pickle
 from matplotlib.lines import Line2D
+import math
 
 # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
 # mpl.rcParams['font.sans-serif'] = ['Arial']
@@ -58,90 +58,99 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
 
-    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, epoch_i, MI_Type):
-        c = sm.to_rgba(epoch_i + 1)
-        # layers = [i for i in range(1,len(I_TX)+1)]
-        std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
-        adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
-        axs[0].set_title(MI_Type)
-        axs[0].legend(line_legends, ['std', 'adv'])
-        axs[1].legend(line_legends, ['std', 'adv'])
+    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type):
+        std_I_TX = np.array(std_I_TX)
+        std_I_TY = np.array(std_I_TY)
+        adv_I_TX = np.array(adv_I_TX)
+        adv_I_TY = np.array(adv_I_TY)
 
-        axs[0].plot(Layer_Name, std_I_TX_epoch_i,
-                    color=c, marker='o',
-                    linestyle='-', linewidth=1,
-                    )
-        axs[1].plot(Layer_Name, adv_I_TX_epoch_i,
-                    color=c, marker='^',
-                    linestyle='--', linewidth=1,
-                    )
-        # axs[0].set_ylim((-0.5, 13))
-        # axs[1].set_ylim((-0.5, 13))
+        # 设定坐标范围
+        i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX)))
+        i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
 
-        axs[2].plot(Layer_Name, std_I_TY_epoch_i,
-                    color=c, marker='o',
-                    linestyle='-', linewidth=1,
-                    )
-        axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
-                    color=c, marker='^',
-                    linestyle='--', linewidth=1,
-                    )
-        # axs[2].set_ylim((-0.5, 4))
-        # axs[3].set_ylim((-0.5, 4))
+        i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY)))
+        i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
 
-        # axs[2].set_title('adv_' + MI_Type)
-        # axs[2].plot(Layer_Name, adv_I_TX_epoch_i,
-        #             color=c, marker='o',
-        #             linestyle='-', linewidth=1,
-        #             )
-        # axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
-        #             color=c, marker='o',
-        #             linestyle='-', linewidth=1,
-        #             )
+        for epoch_i in range(Std_Epoch_Num):
+            c = sm.to_rgba(epoch_i + 1)
+            # layers = [i for i in range(1,len(I_TX)+1)]
+            std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
+            adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+
+            axs[0].set_title(MI_Type)
+
+            axs[0].legend(line_legends, ['std', 'adv'])
+            axs[1].legend(line_legends, ['std', 'adv'])
+
+            axs[0].plot(Layer_Name, std_I_TX_epoch_i,
+                        color=c, marker='o',
+                        linestyle='-', linewidth=1,
+                        )
+            axs[1].plot(Layer_Name, adv_I_TX_epoch_i,
+                        color=c, marker='^',
+                        linestyle='--', linewidth=1,
+                        )
+
+            axs[0].set_ylim((i_tx_min, i_tx_max))
+            axs[1].set_ylim((i_tx_min, i_tx_max))
+
+            axs[2].plot(Layer_Name, std_I_TY_epoch_i,
+                        color=c, marker='o',
+                        linestyle='-', linewidth=1,
+                        )
+            axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
+                        color=c, marker='^',
+                        linestyle='--', linewidth=1,
+                        )
+
+            axs[2].set_ylim((i_ty_min, i_ty_max))
+            axs[3].set_ylim((i_ty_min, i_ty_max))
 
     # fig size, 先列后行
     nrows = 4
     ncols = 4
     fig, axs = plt.subplots(nrows, ncols, figsize=(15, 15), )
+
+    # 初始化 xlabel, y_label
     for i in range(nrows - 1):
         for j in range(ncols):
-            # axs[0].set_xlim(0, 2)
+            axs[i][j].grid(True)
             if j < 2:
                 axs[i][j].set_xlabel('layers')
                 axs[i][j].set_ylabel(r'$I(T;X)$')
-            # axs[0].grid(True)
+
             else:
                 axs[i][j].set_xlabel('layers')
                 axs[i][j].set_ylabel(r'$I(T;Y)$')
-            # axs[1].grid(True)
 
-    # 开始，结束，步长
-    for epoch_i in range(Std_Epoch_Num):
-        if epoch_i % 1 == 0:
-            # std/adv upper
-            axs_plot(axs[0],
-                     std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
-                     adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
-                     epoch_i, MI_Type='upper'
-                     )
-            axs_plot(axs[1],
-                     std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
-                     adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
-                     epoch_i, MI_Type='lower'
-                     )
-            # std/adv bin
-            axs_plot(axs[2],
-                     std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
-                     adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
-                     epoch_i, MI_Type='bin'
-                     )
+    # range(开始，结束，步长)
+    # 绘制每一轮次的信息曲线
 
-            # plt.scatter(I_TX, I_TY,
-            #             color=c,
-            #             linestyle='-', linewidth=0.1,
-            #             zorder=2
-            #             )
+    # std/adv Upper
+    axs_plot(axs[0],
+             std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
+             adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
+             Std_Epoch_Num, MI_Type='upper'
+             )
+    # std/adv Lower
+    axs_plot(axs[1],
+             std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
+             adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
+             Std_Epoch_Num, MI_Type='lower'
+             )
+    # std/adv Bin
+    axs_plot(axs[2],
+             std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
+             adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
+             Std_Epoch_Num, MI_Type='bin'
+             )
 
+    # plt.scatter(I_TX, I_TY,
+    #             color=c,
+    #             linestyle='-', linewidth=0.1,
+    #             zorder=2
+    #             )
+    # -------------------------------------------Loss and Accuracy Detail---------------------
     # for idx, (k, v) in enumerate(analytic_data.items()):
     axs[nrows - 1][0].set_xlabel('epochs')
     axs[nrows - 1][0].set_title('loss')
@@ -176,7 +185,7 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     # -------------------------------------------Mutual Information Detail---------------------
     fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
     # clean examples info flow
-    data = numpy.array(std.epoch_MI_hM_Y_lower_detail)
+    data = np.array(std.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[0]):
         ax.set_xlabel('epochs')
         ax.set_title('Std Layer %d' % layer_i)
@@ -192,7 +201,7 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
             ax.legend(ncol=2)
 
     # adv example info flow
-    data = numpy.array(adv.epoch_MI_hM_Y_lower_detail)
+    data = np.array(adv.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[1]):
         ax.set_xlabel('epochs')
         ax.set_title('Adv Layer %d' % layer_i)
