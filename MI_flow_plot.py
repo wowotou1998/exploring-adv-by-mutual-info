@@ -65,10 +65,10 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
         adv_I_TY = np.array(adv_I_TY)
 
         # 设定坐标范围
-        i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX)))
+        i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX)))-0.5
         i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
 
-        i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY)))
+        i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY)))-0.5
         i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
 
         for epoch_i in range(Std_Epoch_Num):
@@ -231,4 +231,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Model_Name = args.Model_Name
     plot_mutual_info(Model_Name, Enable_Adv_Training=False)
-    plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+    # plot_mutual_info(Model_Name, Enable_Adv_Training=True)

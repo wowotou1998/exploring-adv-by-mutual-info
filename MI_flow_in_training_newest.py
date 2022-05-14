@@ -345,18 +345,19 @@ if __name__ == '__main__':
     # Model, Model_Name = vgg11(pretrained=False)
     # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
 
-    parser = argparse.ArgumentParser(description='training arguments with PyTorch')
+    parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
+    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
     # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
 
     args = parser.parse_args()
 
-    Data_Set = 'CIFAR10'
+    Data_Set = args.Data_Set
     Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
     Trainer_0.training(Enable_Adv_Training=False)
     Trainer_0.training(Enable_Adv_Training=True)
