@@ -33,7 +33,7 @@ class Trainer():
         self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
         self.Learning_Rate = args.Learning_Rate
-        self.Train_Batch_Size = args.Train_Batch_Size
+        self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU_i) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
