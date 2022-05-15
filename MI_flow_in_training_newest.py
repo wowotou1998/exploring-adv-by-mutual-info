@@ -337,16 +337,18 @@ if __name__ == '__main__':
     from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
     import argparse
 
-    # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
-    # Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
-    # Model, Model_Name = net_cifar10(), 'net_cifar10'
-    Model, Model_Name = VGG_s(), 'VGG_s_11'
-    # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
-    # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
-    # Model, Model_Name = vgg11(pretrained=False)
-    # Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
+    Model_dict = {}
+    Model_dict['FC_2'] = FC_2(Activation_F=nn.ReLU())
+    Model_dict['LeNet_cifar10'] = LeNet_cifar10()
+    Model_dict['net_cifar10'] = net_cifar10()
+    Model_dict['VGG_s_11'] = VGG_s()
+    Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
+    Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
+    Model_dict['vgg11'] = vgg11(pretrained=False)
+    Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
+    parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
@@ -359,7 +361,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     Data_Set = args.Data_Set
-    Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
+    Model_Name = args.Model_Name
+    Trainer_0 = Trainer(Model_dict[Model_Name], Model_Name, Data_Set, args)
     Trainer_0.training(Enable_Adv_Training=False)
     Trainer_0.training(Enable_Adv_Training=True)
 
