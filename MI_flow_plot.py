@@ -198,6 +198,7 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     for layer_i in range(Layer_Num):
         axs[0][layer_i].set_xlabel('epochs')
         axs[0][layer_i].set_title('Std Layer %d' % layer_i)
+        # epoch_i, layer_i, label_i
         axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
                              color=COLOR[0],
                              label=r'$H_{Lower}(T_i)$')
@@ -221,7 +222,7 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
         if layer_i == 0:
             axs[0][0].legend(ncol=2)
 
-    # epoch_i, layer_i, label_i
+
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training

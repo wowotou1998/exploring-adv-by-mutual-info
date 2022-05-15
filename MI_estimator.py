@@ -159,13 +159,17 @@ class mutual_info_estimator(object):
         nats2bits = 1.0 / np.log(2)
         # print("layer_activations len", len(layer_activations))
 
+        """
+        获取标签Y中label_i的经验概率
+        """
         Y_one_hot = F.one_hot(Y, num_classes=label_num).float().to(Y.device)
         Y_probs = torch.mean(Y_one_hot, dim=0)
+
+        """
+        获取标签Y中等于label_i的下标集合, pytorch中的tensor可以使用布尔索引,布尔索引中的元素要为布尔值
+        """
         Y_i_idx = []
         for i in range(label_num):
-            """
-            获取标签Y中等于label_i的下标集合, pytorch中的tensor可以使用布尔索引,布尔索引中的元素要为布尔值
-            """
             Y_equal_label_i_index = torch.flatten(Y == i)
             Y_i_idx.append(Y_equal_label_i_index)
 
