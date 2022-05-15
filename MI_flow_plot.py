@@ -187,32 +187,66 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
     # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
     fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
-    # clean examples info flow
-    data = np.array(std.epoch_MI_hM_Y_lower_detail)
-    for layer_i, ax in enumerate(axs[0]):
-        ax.set_xlabel('epochs')
-        ax.set_title('Std Layer %d' % layer_i)
-        # plot the H(T_i) lower
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
+    std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
+    adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
+    COLOR = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5',
+             'C6', 'C7', 'C8', 'C9', 'olive', 'peach', ]
+
+    for layer_i in range(Layer_Num):
+        axs[0][layer_i].set_xlabel('epochs')
+        axs[0][layer_i].set_title('Std Layer %d' % layer_i)
+        axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
+                             color=COLOR[0],
+                             label=r'$H_{Lower}(T_i)$')
+
+        axs[1][layer_i].set_xlabel('epochs')
+        axs[1][layer_i].set_title('Adv Layer %d' % layer_i)
+        axs[1][layer_i].plot(Epochs, adv_lower_detail[..., layer_i, -1],
+                             color=COLOR[0],
+                             label=r'$H_{Lower}(T_i)$')
+
+        for label_i in [i for i in range(10)]:
+            # epoch_i, layer_i, label_i
+            std_temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
+            axs[0][layer_i].plot(Epochs, std_temp_data,
+                                 color=COLOR[label_i + 1],
+                                 label=r'$H(T_i|y_%d)$' % (label_i))
+            adv_temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
+            axs[1][layer_i].plot(Epochs, adv_temp_data,
+                                 color=COLOR[label_i + 1],
+                                 label=r'$H(T_i|y_%d)$' % (label_i))
         if layer_i == 0:
-            ax.legend(ncol=2)
+            axs[0][0].legend(ncol=2)
 
-        for label_i in [i for i in range(10)]:
-            # epoch_i, layer_i, label_i
-            temp_data = data[..., layer_i, 2 * label_i - 1]
-            ax.plot(Epochs, temp_data, label=r'$H(T_i|y_%d)$' % (label_i))
+    # epoch_i, layer_i, label_i
 
-    # adv example info flow
-    data = np.array(adv.epoch_MI_hM_Y_lower_detail)
-    for layer_i, ax in enumerate(axs[1]):
-        ax.set_xlabel('epochs')
-        ax.set_title('Adv Layer %d' % layer_i)
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
-        for label_i in [i for i in range(10)]:
-            # epoch_i, layer_i, label_i
-            temp_data = data[..., layer_i, 2 * label_i - 1]
-            ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
-            #     plot the H(T_i) lower
+    # clean examples info flow
+    # std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
+    # for layer_i, ax in enumerate(axs[0]):
+    #     ax.set_xlabel('epochs')
+    #     ax.set_title('Std Layer %d' % layer_i)
+    #     # plot the H(T_i) lower
+    #
+    #     for label_i in [i for i in range(10)]:
+    #         # epoch_i, layer_i, label_i
+    #         temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
+    #         ax.plot(Epochs, temp_data, label=r'$H(T_i|y_%d)$' % (label_i))
+    #     ax.plot(Epochs, std_lower_detail[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
+    #     if layer_i == 0:
+    #         ax.legend(ncol=2)
+    #
+    # # adv example info flow
+    # adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
+    # for layer_i, ax in enumerate(axs[1]):
+    #     ax.set_xlabel('epochs')
+    #     ax.set_title('Adv Layer %d' % layer_i)
+    #     #     plot the H(T_i) lower
+    #
+    #     for label_i in [i for i in range(10)]:
+    #         # epoch_i, layer_i, label_i
+    #         temp_data = adv_lower_detail[..., layer_i, 2 * label_i - 1]
+    #         ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
+    #     ax.plot(Epochs, adv_lower_detail[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
