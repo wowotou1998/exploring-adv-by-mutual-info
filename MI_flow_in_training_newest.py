@@ -344,7 +344,7 @@ if __name__ == '__main__':
     Model_dict['FC_2'] = FC_2(Activation_F=nn.ReLU())
     Model_dict['LeNet_cifar10'] = LeNet_cifar10()
     Model_dict['net_cifar10'] = net_cifar10()
-    Model_dict['VGG_s_11'] = VGG_s()
+    Model_dict['VGG_s'] = VGG_s()
     Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
