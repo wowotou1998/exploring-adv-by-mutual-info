@@ -216,7 +216,7 @@ class Trainer():
                                   # weight_decay=2e-4
                                   )
         # milestones = [int(self.Std_Epoch_Num * 0.2) + 1, int(self.Std_Epoch_Num * 0.6) + 1]
-        milestones = [20, 60]
+        milestones = [200]
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
 
         criterion = nn.CrossEntropyLoss()
