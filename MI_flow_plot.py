@@ -65,10 +65,10 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
         adv_I_TY = np.array(adv_I_TY)
 
         # 设定坐标范围
-        i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX)))-0.5
+        i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
         i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
 
-        i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY)))-0.5
+        i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
         i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
 
         for epoch_i in range(Std_Epoch_Num):
@@ -175,43 +175,44 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     # fig = plt.gcf()
     # if Enable_Show:
     plt.show()
-    # fig.savefig('/%s.jpg' % ("fig_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")))
-    # fig.savefig('./results_pdf/mutual_info_%s_%s.pdf' % (datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
-    #                                                      Is_Adv_Training
-    #                                                      )
-    #             )
-    fig.savefig('mutual_info_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+    fig.savefig('mutual_info_%s_%s_%s.pdf' % (
+        Model_Name, Is_Adv_Training,
+        datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
 
     # -------------------------------------------Mutual Information Detail---------------------
+    # 设定坐标范围
+    # i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
+    # i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
+    #
+    # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
+    # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
     fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
     # clean examples info flow
     data = np.array(std.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[0]):
         ax.set_xlabel('epochs')
         ax.set_title('Std Layer %d' % layer_i)
+        # plot the H(T_i) lower
+        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
+        if layer_i == 0:
+            ax.legend(ncol=2)
 
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
             temp_data = data[..., layer_i, 2 * label_i - 1]
             ax.plot(Epochs, temp_data, label=r'$H(T_i|y_%d)$' % (label_i))
-        # plot the H(T_i) lower
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
-
-        if layer_i == 0:
-            ax.legend(ncol=2)
 
     # adv example info flow
     data = np.array(adv.epoch_MI_hM_Y_lower_detail)
     for layer_i, ax in enumerate(axs[1]):
         ax.set_xlabel('epochs')
         ax.set_title('Adv Layer %d' % layer_i)
-
+        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
             temp_data = data[..., layer_i, 2 * label_i - 1]
             ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
             #     plot the H(T_i) lower
-        ax.plot(Epochs, data[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
