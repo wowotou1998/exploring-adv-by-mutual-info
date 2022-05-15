@@ -77,11 +77,7 @@ class FC_2(nn.Module):
             Activation_F,
             nn.Linear(20, 10),
         )
-        self.modules_to_hook = ('seq.1',
-                                'seq.5',
-                                'seq.8',
-                                'seq.12',
-                                'seq.14')
+        self.modules_to_hook = (nn.Linear,)
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
