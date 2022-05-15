@@ -189,6 +189,7 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
     std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
     adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
+    # C0-C9 是 matplotlib 里经常使用的色条
     COLOR = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5',
              'C6', 'C7', 'C8', 'C9', 'olive', 'peach', ]
 
@@ -219,34 +220,6 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
             axs[0][0].legend(ncol=2)
 
     # epoch_i, layer_i, label_i
-
-    # clean examples info flow
-    # std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
-    # for layer_i, ax in enumerate(axs[0]):
-    #     ax.set_xlabel('epochs')
-    #     ax.set_title('Std Layer %d' % layer_i)
-    #     # plot the H(T_i) lower
-    #
-    #     for label_i in [i for i in range(10)]:
-    #         # epoch_i, layer_i, label_i
-    #         temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
-    #         ax.plot(Epochs, temp_data, label=r'$H(T_i|y_%d)$' % (label_i))
-    #     ax.plot(Epochs, std_lower_detail[..., layer_i, -1], label=r'$H_{Lower}(T_i)$')
-    #     if layer_i == 0:
-    #         ax.legend(ncol=2)
-    #
-    # # adv example info flow
-    # adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
-    # for layer_i, ax in enumerate(axs[1]):
-    #     ax.set_xlabel('epochs')
-    #     ax.set_title('Adv Layer %d' % layer_i)
-    #     #     plot the H(T_i) lower
-    #
-    #     for label_i in [i for i in range(10)]:
-    #         # epoch_i, layer_i, label_i
-    #         temp_data = adv_lower_detail[..., layer_i, 2 * label_i - 1]
-    #         ax.plot(Epochs, temp_data, label=r'$H(T_%d|y_%d)$' % (layer_i, label_i))
-    #     ax.plot(Epochs, adv_lower_detail[..., layer_i, -1], label=r'$H_{Lower}(T_%d)$' % (layer_i))
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
