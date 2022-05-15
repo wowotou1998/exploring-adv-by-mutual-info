@@ -40,12 +40,14 @@ class Trainer():
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
 
     def Train_Attack(self, Model, Random_Start=False):
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
     def Test_Attack(self, Model, Random_Start=False):
-        atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
@@ -283,8 +285,8 @@ class Trainer():
             train_acc.append(epoch_train_acc)
 
             # print some data
-            print('epoch_i[%d]\n'
-                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]\n'
+            print('epoch_i[%d] '
+                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]'
                   'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
                   % (epoch_i + 1,
                      train_loss_sum / len(self.Train_Loader), epoch_test_clean_loss, epoch_test_adv_loss,
@@ -356,7 +358,7 @@ if __name__ == '__main__':
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
-    # parser.add_argument('--dataset', default='CIFAR10', type=bool, help='dataset.')
+    parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
 
     args = parser.parse_args()
 
