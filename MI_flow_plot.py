@@ -12,6 +12,8 @@ import math
 mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
 mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
 mpl.rcParams['figure.constrained_layout.use'] = True
+plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
+plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
 Forward_Repeat, Forward_Size = 1, 2
 line_styles = ['-', ':']
@@ -66,10 +68,10 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
 
         # 设定坐标范围
         i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
-        i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
+        i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX))) + 0.5
 
         i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
-        i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
+        i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.5
 
         for epoch_i in range(Std_Epoch_Num):
             c = sm.to_rgba(epoch_i + 1)

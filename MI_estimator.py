@@ -90,11 +90,10 @@ class mutual_info_estimator(object):
 
     def cancel_hook(self):
         # print("handle list len", len(handle_list))
+        # 执行完remove()操作后 清除handle_list列表
+
         for handle in self.handle_list:
             handle.remove()
-        """
-        执行完remove()操作后 清除handle_list列表
-        """
         self.handle_list.clear()
 
     def clear_activations(self):
@@ -186,7 +185,9 @@ class mutual_info_estimator(object):
             #     MI_hM_X_mine.append(nats2bits * MI_hM_X_mine_i)
             #     MI_hM_Y_mine.append(nats2bits * MI_hM_Y_mine_i)
 
-            # -------- I(T;X), I(T;Y)  binning --------
+            """
+            -------- I(T;X), I(T;Y)  binning --------
+            """
             if self.DO_BIN:
                 """
                 为什么实验结果绘制出的各层的信息变化曲线是平行线且几乎重合在一起呢， 是因为
@@ -202,7 +203,9 @@ class mutual_info_estimator(object):
                 MI_hM_X_bin.append(nats2bits * MI_hM_X_bin_layer_i)
                 MI_hM_Y_bin.append(nats2bits * MI_hM_Y_bin_layer_i)
 
-            # -------- I(T;X), I(T;Y)  upper and lower  --------
+            """
+            -------- I(T;X), I(T;Y) lower  --------
+            """
             # 最后一层输出 \hat{y} 也可以直接使用KDE来计算互信息, 因为 \hat{y} 仅仅只是预测值,不是真实的标签 y, 自然也可以当成隐藏层来计算互信息
 
             hM_given_X = kde_multivariate_gauss_entropy(layer_i_activations, noise_variance)
@@ -225,9 +228,9 @@ class mutual_info_estimator(object):
 
                     # 存储 H(T|y) 的信息 以及 p(y) 的概率
                     layer_i_lower_detail.append(Y_probs[y_i].item())
-                    layer_i_lower_detail.append(hM_given_Y_i_lower)
+                    layer_i_lower_detail.append(nats2bits * hM_given_Y_i_lower)
 
-                layer_i_lower_detail.append(hM_lower)
+                layer_i_lower_detail.append(nats2bits * hM_lower)
                 MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
                 MI_hM_Y_lower_detail.append(layer_i_lower_detail)
 

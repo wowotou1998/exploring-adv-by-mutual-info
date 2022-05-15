@@ -176,8 +176,8 @@ class Trainer():
             """
             forward 之后例行收尾工作
             """
-            estimator.clear_activations()
             estimator.cancel_hook()
+            estimator.clear_activations()
         # 计算存储互信息
         # calculate mutual info
         """

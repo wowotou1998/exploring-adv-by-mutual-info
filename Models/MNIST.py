@@ -57,14 +57,17 @@ class FC_2(nn.Module):
         super().__init__()
         self.name = "FC_784_1024_20(3)_10"
         # 最后是三个全连接层
+        '''
+        实验证明， 用瓶颈网络来压缩数据维数不大可行， 很难训练
+        '''
         self.seq = nn.Sequential(
             nn.Linear(1 * 28 * 28, 784),
-            nn.Linear(784, 10),
-            nn.Linear(10, 784),
+            # nn.Linear(784, 10),
+            # nn.Linear(10, 784),
             Activation_F,
             nn.Linear(784, 1024),
-            nn.Linear(1024, 10),
-            nn.Linear(10, 1024),
+            # nn.Linear(1024, 10),
+            # nn.Linear(10, 1024),
             Activation_F,
             nn.Linear(1024, 20),
             Activation_F,

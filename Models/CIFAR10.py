@@ -401,6 +401,11 @@ class VGG_s(nn.Module):
             nn.Linear(in_features=64, out_features=64),
             nn.ReLU(),
             nn.Dropout(0.5),
+
+            nn.Linear(in_features=64, out_features=64),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+
             nn.Linear(in_features=64, out_features=10),
         )
 
