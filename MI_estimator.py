@@ -231,7 +231,8 @@ class mutual_info_estimator(object):
                     hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
 
                     # 存储 H(T|y) 的信息 以及 p(y) 的概率
-                    layer_i_lower_detail.append(Y_probs[y_i].item())
+                    # 这里感觉没必要把各个类别出现的经验概率值记录下来
+                    # layer_i_lower_detail.append(Y_probs[y_i].item())
                     layer_i_lower_detail.append(nats2bits * hM_given_Y_i_lower)
 
                 layer_i_lower_detail.append(nats2bits * hM_lower)

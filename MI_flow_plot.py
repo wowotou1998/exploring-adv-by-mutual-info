@@ -211,18 +211,16 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
 
         for label_i in [i for i in range(10)]:
             # epoch_i, layer_i, label_i
-            std_temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
+            std_temp_data = std_lower_detail[..., layer_i, label_i]
             axs[0][layer_i].plot(Epochs, std_temp_data,
                                  color=COLOR[label_i + 1],
                                  label=r'$H(T_i|y_%d)$' % (label_i))
-            adv_temp_data = std_lower_detail[..., layer_i, 2 * label_i - 1]
+            adv_temp_data = std_lower_detail[..., layer_i, label_i]
             axs[1][layer_i].plot(Epochs, adv_temp_data,
                                  color=COLOR[label_i + 1],
                                  label=r'$H(T_i|y_%d)$' % (label_i))
         if layer_i == 0:
             axs[0][0].legend(ncol=2)
-
-
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
