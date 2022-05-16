@@ -208,16 +208,20 @@ class Trainer():
             optimizer = optim.SGD(Model.parameters(),
                                   lr=self.Learning_Rate,
                                   momentum=0.9,
+                                  # weight_decay=2e-4
                                   )
         else:
             optimizer = optim.SGD(Model.parameters(),
                                   lr=self.Learning_Rate,
                                   momentum=0.9,
-                                  # weight_decay=2e-4
                                   )
+            # optimizer = optim.Adam(Model.parameters(),
+            #                        lr=self.Learning_Rate)
+
         # milestones = [int(self.Std_Epoch_Num * 0.2) + 1, int(self.Std_Epoch_Num * 0.6) + 1]
-        milestones = [200]
-        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
+        # milestones = [200]
+        # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 60], gamma=0.5)
 
         criterion = nn.CrossEntropyLoss()
 
@@ -352,8 +356,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
-    parser.add_argument('--Learning_Rate', default=1e-1, type=float, help='The learning rate.')
+    parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
+    parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
