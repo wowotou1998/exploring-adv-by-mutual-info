@@ -6,6 +6,8 @@ from utils import *
 import pickle
 from matplotlib.lines import Line2D
 import math
+import torch
+import torch.nn.functional as F
 
 # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
 # mpl.rcParams['font.sans-serif'] = ['Arial']
@@ -231,6 +233,65 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     print("Work has done!")
 
 
+def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
+    Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+    with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
+        transfer_matrix = pickle.load(f)
+
+    # print(transfer_matrix)
+    label_num = 10
+    label_chunk = transfer_matrix['label_chunk']
+    label_std_chunk = transfer_matrix['label_std_chunk']
+    label_prob_std_chunk = transfer_matrix['label_prob_std_chunk']
+    label_adv_chunk = transfer_matrix['label_adv_chunk']
+    label_prob_adv_chunk = transfer_matrix['label_prob_adv_chunk']
+    """
+    获取标签Y中label_i的经验概率
+    """
+    # Y_one_hot = F.one_hot(Y, num_classes=label_num).float().to(Y.device)
+    # Y_probs = torch.mean(Y_one_hot, dim=0)
+
+    """
+    获取标签Y中等于label_i的下标集合, pytorch中的tensor可以使用布尔索引,布尔索引中的元素要为布尔值
+    """
+
+    # Y_i_idx = []
+    # for i in range(label_num):
+    #     Y_equal_label_i_index = torch.flatten(Y == i)
+    #     Y_i_idx.append(Y_equal_label_i_index)
+    #
+    # saved_label_idx = {}
+    # for idx, value in enumerate(Y_i_idx):
+    #     saved_label_idx[idx] = value.clone().detach().cpu().numpy()
+
+    def calculate_transfer_matrix(labels_origin, predict, probs, label_num):
+        label_i2j = np.zeros(shape=(label_num, label_num), dtype=int)
+        label_i2j_prob = np.zeros(shape=(label_num, label_num), dtype=float)
+        for i in range(label_num):
+            # 获取 源标签数组 中关于第i号标签的索引
+            index_about_i = torch.flatten(labels_origin == i)
+            # 根据索引在 预测标签数组/预测概率数组 获取相应的内容
+            predict_about_i = predict[index_about_i]
+            probs_about_i = probs[index_about_i]
+            for j in range(label_num):
+                # 获取 对标签i预测之后的数组中 对 第j号标签 的索引 (神经网络如果没做到100%正确， 那会把真实标签i预测为其他的标签j
+                index_about_i2j = torch.flatten(predict_about_i == j)
+                i2j_num = torch.sum(index_about_i2j).item()
+                label_i2j[i][j] = i2j_num
+                # 根据索引在 预测概率数组 获取相应的内容
+                # 由于bool 索引中的数值相当于只要0、1值， 可以使用求和函数直接算出把第i类分别为j类的个数
+                probs_about_i2j = probs_about_i[index_about_i2j]
+                if i2j_num == 0:
+                    label_i2j_prob[i][j] = 0.0
+                else:
+                    label_i2j_prob[i][j] = torch.sum(probs_about_i2j).item() / i2j_num
+        return label_i2j, label_i2j_prob
+
+    a, b = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
+    print(a)
+    print(b)
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -239,5 +300,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     Model_Name = args.Model_Name
-    plot_mutual_info(Model_Name, Enable_Adv_Training=False)
-    plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+    plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
+    # plot_mutual_info(Model_Name, Enable_Adv_Training=False)
+    # plot_mutual_info(Model_Name, Enable_Adv_Training=True)

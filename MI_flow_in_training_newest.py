@@ -39,13 +39,13 @@ class Trainer():
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
 
-    def Train_Attack(self, Model, Random_Start=False):
+    def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
         atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
-    def Test_Attack(self, Model, Random_Start=False):
+    def test_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
         atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
@@ -54,6 +54,10 @@ class Trainer():
         return atk
 
     def get_train_test_loader(self, Data_Set='CIFAR10'):
+        # 全局取消证书验证
+        import ssl
+        ssl._create_default_https_context = ssl._create_unverified_context
+
         data_tf_cifar10 = transforms.Compose([
             transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
             transforms.RandomHorizontalFlip(),
@@ -101,7 +105,7 @@ class Trainer():
 
     @torch.no_grad()
     def get_clean_or_adv_image(self, Model, Keep_Clean):
-        atk = self.Test_Attack(Model, Random_Start=False)
+        atk = self.test_attack(Model, Random_Start=False)
 
         batch_images, batch_labels = next(iter(self.Test_Loader))
         batch_images = batch_images.to(self.Device)
@@ -114,6 +118,8 @@ class Trainer():
                 adv_images = atk(batch_images, batch_labels)
                 return adv_images, batch_labels
 
+    # this training function is only for classification task
+
     @torch.no_grad()
     def calculate_acc_and_mutual_info(self, Model, Keep_Clean):
         # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
@@ -124,9 +130,9 @@ class Trainer():
         total_N = 0
         loss = 0.
 
-        image_chunk = []
-        label_chunk = []
-        layer_activation_chunk = []
+        image_chunk = None
+        label_chunk = None
+        layer_activation_chunk = None
 
         if Keep_Clean:
             estimator = self.std_estimator
@@ -152,7 +158,10 @@ class Trainer():
             """
             outputs = Model(images)
             loss_i = F.cross_entropy(outputs, labels)
-            _, predicted = torch.max(outputs.data, dim=1)
+            # predicted_prob, predicted, labels 都可以看成是一个列表或者是一个向量，列表中元素的个数为 batch_size 个
+            # 先对神经网络的输出结果做一个 softmax 获取概率值
+            # predicted_prob, predicted = torch.max(F.softmax(outputs, dim=1), dim=1)
+            predicted_prob, predicted = torch.max(outputs, dim=1)
             correct_N += (predicted == labels).sum().item()
             total_N += labels.size(0)
             loss += loss_i.item()
@@ -164,18 +173,21 @@ class Trainer():
             # 给定初始值
             if i == 0:
                 # print("---> layer activations size {} <---".format(layer_activations_size))
-                image_chunk = images
-                label_chunk = labels
+                image_chunk = images.clone().detach()
+                label_chunk = labels.clone().detach()
                 '''
                 注意， 这里如果简单赋值就会出现传递引用的现象，需要手动调用copy,复制列表
                 '''
                 layer_activation_chunk = estimator.layer_activations.copy()
             # 计算所有循环的和
             else:
-                image_chunk = torch.cat((image_chunk, images), dim=0)
-                label_chunk = torch.cat((label_chunk, labels), dim=0)
+                image_chunk = torch.cat((image_chunk, images.clone().detach()), dim=0)
+                label_chunk = torch.cat((label_chunk, labels.clone().detach()), dim=0)
+                """
+                这里 layer_activations 是一个 list, list 里的每一个元素时 tesnor (gpu:0)
+                """
                 for idx, item in enumerate(estimator.layer_activations):
-                    layer_activation_chunk[idx] = torch.cat((layer_activation_chunk[idx], item), dim=0)
+                    layer_activation_chunk[idx] = torch.cat((layer_activation_chunk[idx], item.clone().detach()), dim=0)
             """
             forward 之后例行收尾工作
             """
@@ -183,9 +195,6 @@ class Trainer():
             estimator.clear_activations()
         # 计算存储互信息
         # calculate mutual info
-        """
-        这里 layer_activations 是一个 list, list 里的每一个元素时 tesnor (gpu:0)
-        """
         estimator.layer_activations = layer_activation_chunk
         estimator.caculate_MI(image_chunk, label_chunk)
         estimator.store_MI()
@@ -193,7 +202,6 @@ class Trainer():
         acc = correct_N * 100. / total_N
         return acc, loss / self.Forward_Repeat
 
-    # this training function is only for classification task
     def training(self, Enable_Adv_Training):
         print("Model Structure\n", self.Origin_Model)
         import copy
@@ -258,7 +266,7 @@ class Trainer():
                 batch_images = batch_images.to(self.Device)
 
                 if Enable_Adv_Training:
-                    atk = self.Train_Attack(Model, Random_Start=True)
+                    atk = self.train_attack(Model, Random_Start=True)
                     batch_images = atk(batch_images, batch_labels)
 
                 outputs = Model(batch_images)
@@ -291,7 +299,7 @@ class Trainer():
 
             # print some data
             print('epoch_i[%d] '
-                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f]'
+                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f] '
                   'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
                   % (epoch_i + 1,
                      train_loss_sum / len(self.Train_Loader), epoch_test_clean_loss, epoch_test_adv_loss,
@@ -323,6 +331,93 @@ class Trainer():
         print('the training has completed')
         return analytic_data
 
+    def calculate_transfer_matrix(self, Model, Enable_Adv_Training=False):
+        # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
+        # a = list[-1]就是最后一个元素
+        Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+        Model = Model.to(self.Device)
+        Model.eval()
+
+        correct_N = 0
+        total_N = 0
+        loss = 0.
+
+        label_chunk = None
+        label_std_chunk, label_prob_std_chunk = None, None
+        label_adv_chunk, label_prob_adv_chunk = None, None
+
+        Test_loader_Iter = iter(self.Test_Loader)
+
+        for i in range(self.Forward_Repeat):
+            images_clean, labels = next(Test_loader_Iter)
+            # 1. 保存真实标签
+            # 2. 保存模型对 干净样本 的预测标签和概率
+            # 3. 保存模型对 对抗样本 的预测标签和概率
+            images_clean = images_clean.to(self.Device)
+            labels = labels.to(self.Device)
+
+            atk = self.test_attack(Model, Random_Start=False)
+
+            images_adv = atk(images_clean, labels)
+
+            """
+            计算模型的准确率
+            """
+            # loss_i = F.cross_entropy(outputs, labels)
+            # predicted_prob, predicted, labels 都可以看成是一个列表或者是一个向量，列表中元素的个数为 batch_size 个
+            # 先对神经网络的输出结果做一个 softmax 获取概率值
+            outputs_std = Model(images_clean)
+            label_prob_std, label_std = torch.max(F.softmax(outputs_std, dim=1), dim=1)
+
+            outputs_adv = Model(images_adv)
+            label_prob_adv, label_adv = torch.max(F.softmax(outputs_adv, dim=1), dim=1)
+
+            # correct_N += (predicted_std == labels).sum().item()
+            # total_N += labels.size(0)
+            # loss += loss_i.item()
+
+            """
+            发现并修改了一个重大bug, 这里每forward一次,caculate_MI 函数计算出的互信息值都直接挂在列表的后面，那么 Forward_Repeat 会成倍放大列表的长度
+            且会混乱每一个 epoch 中的互信息变化情况，Forward_Repeat 一旦超过 epoch_num ，那么每一个 epoch 的曲线就会
+            """
+            # 给定初始值
+            if i == 0:
+                label_chunk = labels.clone().detach()
+                # std
+                label_std_chunk = label_std.clone().detach()
+                label_prob_std_chunk = label_prob_std.clone().detach()
+                # adv
+                label_adv_chunk = label_adv.clone().detach()
+                label_prob_adv_chunk = label_prob_adv.clone().detach()
+
+                # 计算所有循环的和
+            else:
+                label_chunk = torch.cat((label_chunk, labels.clone().detach()), dim=0)
+                # std
+                label_std_chunk = torch.cat((label_std_chunk, label_std.clone().detach()), dim=0)
+                label_prob_std_chunk = torch.cat((label_prob_std_chunk, label_prob_std.clone().detach()), dim=0)
+                # adv
+                label_adv_chunk = torch.cat((label_adv_chunk, label_adv.clone().detach()), dim=0)
+                label_prob_adv_chunk = torch.cat((label_prob_adv_chunk, label_prob_adv.clone().detach()), dim=0)
+
+        dir = 'Checkpoint/%s' % Model_Name
+        # 对于每一个模型产生的数据, 使用一个文件夹单独存放
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        transfer_matrix = {'label_chunk': label_chunk,
+                           'label_std_chunk': label_std_chunk,
+                           'label_prob_std_chunk': label_prob_std_chunk,
+                           'label_adv_chunk': label_adv_chunk,
+                           'label_prob_adv_chunk': label_prob_adv_chunk,
+                           }
+
+        with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+            pickle.dump(transfer_matrix, f)
+        print('Calculating Transfer Matrix was Done')
+
+
+if __name__ == '__main__':
     # Random_Seed = 123
     # torch.manual_seed(Random_Seed)
     # torch.cuda.manual_seed(Random_Seed)  # 设置当前GPU的随机数生成种子
@@ -331,9 +426,6 @@ class Trainer():
     # analytic_data = training(Enable_Adv_Training=False)
 
     # analytic_data_2 = training(Model, Enable_Adv_Training=True)
-
-
-if __name__ == '__main__':
     check_dir = ['DataSet/MNIST', 'DataSet/CIFAR10', 'Checkpoint']
     for dir in check_dir:
         if not os.path.exists(dir):
@@ -369,9 +461,12 @@ if __name__ == '__main__':
 
     Data_Set = args.Data_Set
     Model_Name = args.Model_Name
-    Trainer_0 = Trainer(Model_dict[Model_Name], Model_Name, Data_Set, args)
-    Trainer_0.training(Enable_Adv_Training=False)
-    Trainer_0.training(Enable_Adv_Training=True)
+    Model = Model_dict[Model_Name]
+    Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
+    # Trainer_0.training(Enable_Adv_Training=False)
+    # Trainer_0.training(Enable_Adv_Training=True)
+    # load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
+    Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
     # pass
 
