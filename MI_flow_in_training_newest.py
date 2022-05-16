@@ -463,10 +463,10 @@ if __name__ == '__main__':
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
     Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
-    # Trainer_0.training(Enable_Adv_Training=False)
-    # Trainer_0.training(Enable_Adv_Training=True)
+    Trainer_0.training(Enable_Adv_Training=False)
+    Trainer_0.training(Enable_Adv_Training=True)
     # load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-    Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
+    # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
     # pass
 
