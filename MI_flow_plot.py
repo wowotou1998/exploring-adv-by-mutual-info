@@ -287,9 +287,11 @@ def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
                     label_i2j_prob[i][j] = torch.sum(probs_about_i2j).item() / i2j_num
         return label_i2j, label_i2j_prob
 
-    a, b = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
-    print(a)
-    print(b)
+    i2j_std, i2j_prob_std = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
+    i2j_adv, i2j_prob_adv = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
+
+
+#     plot
 
 
 if __name__ == '__main__':
