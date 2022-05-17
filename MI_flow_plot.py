@@ -233,10 +233,151 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     print("Work has done!")
 
 
+def heatmap(data, row_labels, col_labels, ax=None,
+            cbar_kw={}, cbarlabel="", **kwargs):
+    """
+    Create a heatmap from a numpy array and two lists of labels.
+
+    Parameters
+    ----------
+    data
+        A 2D numpy array of shape (M, N).
+    row_labels
+        A list or array of length M with the labels for the rows.
+    col_labels
+        A list or array of length N with the labels for the columns.
+    ax
+        A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
+        not provided, use current axes or create a new one.  Optional.
+    cbar_kw
+        A dictionary with arguments to `matplotlib.Figure.colorbar`.  Optional.
+    cbarlabel
+        The label for the colorbar.  Optional.
+    **kwargs
+        All other arguments are forwarded to `imshow`.
+    """
+
+    if not ax:
+        ax = plt.gca()
+
+    # Plot the heatmap
+    im = ax.imshow(data, **kwargs)
+
+    # Create colorbar
+    cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+    cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
+
+    # Show all ticks and label them with the respective list entries.
+    ax.set_xticks(np.arange(data.shape[1]), labels=col_labels)
+    ax.set_yticks(np.arange(data.shape[0]), labels=row_labels)
+
+    # Let the horizontal axes labeling appear on top.
+    ax.tick_params(top=True, bottom=False,
+                   labeltop=True, labelbottom=False)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=-30, ha="right",
+             rotation_mode="anchor")
+
+    # Turn spines off and create white grid.
+    ax.spines[:].set_visible(False)
+
+    ax.set_xticks(np.arange(data.shape[1] + 1) - .5, minor=True)
+    ax.set_yticks(np.arange(data.shape[0] + 1) - .5, minor=True)
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
+    ax.tick_params(which="minor", bottom=False, left=False)
+
+    return im, cbar
+
+
+def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
+                     textcolors=("black", "white"),
+                     threshold=None, **textkw):
+    import matplotlib
+    """
+    A function to annotate a heatmap.
+
+    Parameters
+    ----------
+    im
+        The AxesImage to be labeled.
+    data
+        Data used to annotate.  If None, the image's data is used.  Optional.
+    valfmt
+        The format of the annotations inside the heatmap.  This should either
+        use the string format method, e.g. "$ {x:.2f}", or be a
+        `matplotlib.ticker.Formatter`.  Optional.
+    textcolors
+        A pair of colors.  The first is used for values below a threshold,
+        the second for those above.  Optional.
+    threshold
+        Value in data units according to which the colors from textcolors are
+        applied.  If None (the default) uses the middle of the colormap as
+        separation.  Optional.
+    **kwargs
+        All other arguments are forwarded to each call to `text` used to create
+        the text labels.
+    """
+
+    if not isinstance(data, (list, np.ndarray)):
+        data = im.get_array()
+
+    # Normalize the threshold to the images color range.
+    if threshold is not None:
+        threshold = im.norm(threshold)
+    else:
+        threshold = im.norm(data.max()) / 2.
+
+    # Set default alignment to center, but allow it to be
+    # overwritten by textkw.
+    kw = dict(horizontalalignment="center",
+              verticalalignment="center")
+    kw.update(textkw)
+
+    # Get the formatter in case a string is supplied
+    if isinstance(valfmt, str):
+        valfmt = matplotlib.ticker.StrMethodFormatter(valfmt)
+
+    # Loop over the data and create a `Text` for each "pixel".
+    # Change the text's color depending on the data.
+    texts = []
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
+            text = im.axes.text(j, i, valfmt(data[i, j], None), **kw)
+            texts.append(text)
+
+    return texts
+
+
 def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         transfer_matrix = pickle.load(f)
+
+    def plot_heat_map(matrix_1, row_labels, col_labels, ax, valfmt):
+        import matplotlib
+
+        fmt = matplotlib.ticker.StrMethodFormatter(valfmt)
+        im = ax.imshow(matrix_1)
+
+        # Show all ticks and label them with the respective list entries
+        ax.set_xticks(np.arange(len(col_labels)), labels=col_labels)
+        ax.set_yticks(np.arange(len(row_labels)), labels=row_labels)
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+        # Loop over data dimensions and create text annotations.
+        # 在每一个格子里显示数值
+        for i in range(len(row_labels)):
+            for j in range(len(col_labels)):
+                text = ax.text(j, i, fmt(matrix_1[i, j]),
+                               ha="center", va="center", color="w")
+
+        ax.set_title("matrix_1 of local col_labels (in tons/year)")
+        ax.figure.colorbar(im, ax=ax)
 
     # print(transfer_matrix)
     label_num = 10
@@ -245,24 +386,6 @@ def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
     label_prob_std_chunk = transfer_matrix['label_prob_std_chunk']
     label_adv_chunk = transfer_matrix['label_adv_chunk']
     label_prob_adv_chunk = transfer_matrix['label_prob_adv_chunk']
-    """
-    获取标签Y中label_i的经验概率
-    """
-    # Y_one_hot = F.one_hot(Y, num_classes=label_num).float().to(Y.device)
-    # Y_probs = torch.mean(Y_one_hot, dim=0)
-
-    """
-    获取标签Y中等于label_i的下标集合, pytorch中的tensor可以使用布尔索引,布尔索引中的元素要为布尔值
-    """
-
-    # Y_i_idx = []
-    # for i in range(label_num):
-    #     Y_equal_label_i_index = torch.flatten(Y == i)
-    #     Y_i_idx.append(Y_equal_label_i_index)
-    #
-    # saved_label_idx = {}
-    # for idx, value in enumerate(Y_i_idx):
-    #     saved_label_idx[idx] = value.clone().detach().cpu().numpy()
 
     def calculate_transfer_matrix(labels_origin, predict, probs, label_num):
         label_i2j = np.zeros(shape=(label_num, label_num), dtype=int)
@@ -288,20 +411,51 @@ def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
         return label_i2j, label_i2j_prob
 
     i2j_std, i2j_prob_std = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
-    i2j_adv, i2j_prob_adv = calculate_transfer_matrix(label_chunk, label_std_chunk, label_prob_std_chunk, 10)
+    i2j_adv, i2j_prob_adv = calculate_transfer_matrix(label_chunk, label_adv_chunk, label_prob_adv_chunk, 10)
+    label_name = [str(i) for i in range(10)]
 
+    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
 
-#     plot
+    plot_heat_map(i2j_std, row_labels=label_name, col_labels=label_name, ax=axs[0][0], valfmt="{x:}")
+    plot_heat_map(i2j_prob_std, row_labels=label_name, col_labels=label_name, ax=axs[0][1], valfmt="{x:.2f}")
+
+    plot_heat_map(i2j_adv, row_labels=label_name, col_labels=label_name, ax=axs[1][0], valfmt="{x:}")
+    plot_heat_map(i2j_prob_adv, row_labels=label_name, col_labels=label_name, ax=axs[1][1], valfmt="{x:.2f}")
+
+    fig.savefig('transfer_matrix_%s_%s.pdf' % (Model_Name, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
 
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-
+    # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
     plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
-    # plot_mutual_info(Model_Name, Enable_Adv_Training=False)
-    # plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+    plot_mutual_info(Model_Name, Enable_Adv_Training=False)
+    plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+
+    # vegetables = ["cucumber", "tomato", "lettuce", "asparagus",
+    #               "potato", "wheat", "barley"]
+    # farmers = ["Farmer Joe", "Upland Bros.", "Smith Gardening",
+    #            "Agrifun", "Organiculture", "BioGoods Ltd.", "Cornylee Corp."]
+    #
+    # harvest = np.array([[0.8, 2.4, 2.5, 3.9, 0.0, 4.0, 0.0],
+    #                     [2.4, 0.0, 4.0, 1.0, 2.7, 0.0, 0.0],
+    #                     [1.1, 2.4, 0.8, 4.3, 1.9, 4.4, 0.0],
+    #                     [0.6, 0.0, 0.3, 0.0, 3.1, 0.0, 0.0],
+    #                     [0.7, 1.7, 0.6, 2.6, 2.2, 6.2, 0.0],
+    #                     [1.3, 1.2, 0.0, 0.0, 0.0, 3.2, 5.1],
+    #                     [0.1, 2.0, 0.0, 1.4, 0.0, 1.9, 6.3]])
+
+    # fig, ax = plt.subplots()
+    #
+    # im, cbar = heatmap(harvest, vegetables, farmers, ax=ax,
+    #                    cmap="YlGn", cbarlabel="harvest [t/year]")
+    # texts = annotate_heatmap(im, valfmt="{x:.1f} t")
+    #
+    # # fig.tight_layout()
+    # plt.show()

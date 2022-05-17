@@ -40,14 +40,14 @@ class Trainer():
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
 
     def train_attack(self, Model, Random_Start=False):
-        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
     def test_attack(self, Model, Random_Start=False):
-        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
@@ -447,11 +447,12 @@ if __name__ == '__main__':
     Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
-    parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=1000, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
@@ -463,10 +464,11 @@ if __name__ == '__main__':
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
     Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
-    Trainer_0.training(Enable_Adv_Training=False)
-    Trainer_0.training(Enable_Adv_Training=True)
-    # load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-    # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
+    # Trainer_0.training(Enable_Adv_Training=False)
+    # Trainer_0.training(Enable_Adv_Training=True)
+
+    load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
+    Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
     # pass
 
