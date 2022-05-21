@@ -434,7 +434,7 @@ if __name__ == '__main__':
     parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
-    plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
+    # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info(Model_Name, Enable_Adv_Training=True)
 

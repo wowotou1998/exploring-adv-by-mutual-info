@@ -40,14 +40,14 @@ class Trainer():
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
 
     def train_attack(self, Model, Random_Start=False):
-        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
     def test_attack(self, Model, Random_Start=False):
-        atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
@@ -56,13 +56,82 @@ class Trainer():
     def get_train_test_loader(self, Data_Set='CIFAR10'):
         # 全局取消证书验证
         import ssl
+        import random
         ssl._create_default_https_context = ssl._create_unverified_context
+
+        class Saturation_Transform(object):
+            '''
+            for each pixel v: v' = sign(2v - 1) * |2v - 1|^{2/p}  * 0.5 + 0.5
+            then clip -> (0, 1)
+            '''
+
+            def __init__(self, saturation_level=2.0):
+                self.p = saturation_level
+
+            def __call__(self, img):
+                ones = torch.ones_like(img)
+                # print(img.size(), torch.max(img), torch.min(img))
+                ret_img = torch.sign(2 * img - ones) * torch.pow(torch.abs(2 * img - ones), 2.0 / self.p)
+
+                ret_img = ret_img * 0.5 + ones * 0.5
+
+                ret_img = torch.clamp(ret_img, 0, 1)
+
+                return ret_img
+
+        class Patch_Transform(object):
+            def __init__(self, k=2):
+                self.k = k
+
+            def __call__(self, xtensor: torch.Tensor):
+                '''
+                X: torch.Tensor of shape(c, h, w)   h % self.k == 0
+                :param xtensor:
+                :return:
+                '''
+                patches = []
+                c, h, w = xtensor.size()
+                dh = h // self.k
+                dw = w // self.k
+
+                # print(dh, dw)
+                sh = 0
+                for i in range(h // dh):
+                    eh = sh + dh
+                    eh = min(eh, h)
+                    sw = 0
+                    for j in range(w // dw):
+                        ew = sw + dw
+                        ew = min(ew, w)
+                        patches.append(xtensor[:, sh:eh, sw:ew])
+
+                        # print(sh, eh, sw, ew)
+                        sw = ew
+                    sh = eh
+
+                random.shuffle(patches)
+
+                start = 0
+                imgs = []
+                for i in range(self.k):
+                    end = start + self.k
+                    imgs.append(torch.cat(patches[start:end], dim=1))
+                    start = end
+                img = torch.cat(imgs, dim=2)
+                return img
 
         data_tf_cifar10 = transforms.Compose([
             transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
         ])
+
+        data_tf_cifar10_test = transforms.Compose([
+            transforms.ToTensor(),
+            # Saturation_Transform(saturation_level=1024.),
+            Patch_Transform(k=4),
+        ])
+
         data_tf_mnist = transforms.Compose([
             transforms.ToTensor(),
         ])
@@ -70,7 +139,7 @@ class Trainer():
         if Data_Set == 'CIFAR10':
             train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
                                              download=True)
-            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=transforms.ToTensor())
+            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_cifar10_test)
         else:
             train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
@@ -216,7 +285,7 @@ class Trainer():
             optimizer = optim.SGD(Model.parameters(),
                                   lr=self.Learning_Rate,
                                   momentum=0.9,
-                                  # weight_decay=2e-4
+                                  weight_decay=2e-4
                                   )
         else:
             optimizer = optim.SGD(Model.parameters(),
@@ -331,16 +400,63 @@ class Trainer():
         print('the training has completed')
         return analytic_data
 
+    def only_forward(self, Model, Enable_Adv_Training):
+
+        Model = Model.to(self.Device)
+        Model.eval()
+
+        epoch_test_clean_acc, epoch_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
+        epoch_test_adv_acc, epoch_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
+        print('test_clean_acc[%.2f], test_clean_loss[%.2f],test_adv_acc[%.2f], test_adv_loss[%.2f]' % (
+            epoch_test_clean_acc, epoch_test_clean_loss, epoch_test_adv_acc, epoch_test_adv_loss))
+        analytic_data = {
+            'train_loss': [0.],
+            'test_clean_loss': [epoch_test_clean_loss],
+            'test_adv_loss': [epoch_test_adv_loss],
+            'train_acc': [0],
+            'test_clean_acc': [epoch_test_clean_acc],
+            'test_adv_acc': [epoch_test_adv_acc]
+        }
+
+        # plot_performance(analytic_data, Enable_Adv_Training)
+
+        Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
+        Model_Name, Forward_Size, Forward_Repeat = self.Model_Name, self.Forward_Size, self.Forward_Repeat
+        dir = 'Checkpoint/%s/only_forward' % Model_Name
+        # 对于每一个模型产生的数据, 使用一个文件夹单独存放
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        basic_info = {'Model': Model_Name,
+                      'Enable_Adv_Training': Enable_Adv_Training,
+                      'Forward_Size': Forward_Size,
+                      'Forward_Repeat': Forward_Repeat,
+                      }
+
+        with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+            pickle.dump(basic_info, f)
+        with open('./Checkpoint/%s/loss_and_acc_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+            pickle.dump(analytic_data, f)
+        with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+            pickle.dump(self.std_estimator, f)
+        with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+            pickle.dump(self.adv_estimator, f)
+
+        """
+        在退出之前完成清理工作
+        """
+        self.std_estimator.clear_all()
+        self.adv_estimator.clear_all()
+        print('the only forward has completed')
+        return analytic_data
+
     def calculate_transfer_matrix(self, Model, Enable_Adv_Training=False):
+        # 计算模型的对样本的分类情况，以及置信度
         # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
         # a = list[-1]就是最后一个元素
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
         Model = Model.to(self.Device)
         Model.eval()
-
-        correct_N = 0
-        total_N = 0
-        loss = 0.
 
         label_chunk = None
         label_std_chunk, label_prob_std_chunk = None, None
@@ -449,7 +565,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
     parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
-    parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
+    parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
@@ -466,9 +582,12 @@ if __name__ == '__main__':
     Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
     # Trainer_0.training(Enable_Adv_Training=False)
     # Trainer_0.training(Enable_Adv_Training=True)
+    # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
     load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-    Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
+    Trainer_0.only_forward(Model, Enable_Adv_Training=False)
+    load_model(Model, './Checkpoint/%s_adv.pth' % Model_Name)
+    Trainer_0.only_forward(Model, Enable_Adv_Training=True)
 
     # pass
 
