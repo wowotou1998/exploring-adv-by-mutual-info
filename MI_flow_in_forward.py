@@ -25,35 +25,24 @@ import torch.nn.functional as F
 # Activation_F = 'ReLU'
 
 
-class Trainer():
+class Forward():
     def __init__(self, Origin_Model, Model_Name, Data_Set, args):
         self.Origin_Model = Origin_Model
         self.Model_Name = Model_Name
         # self.Enable_Show = True
         self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
-        self.Learning_Rate = args.Learning_Rate
         self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
-        self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
+        # 在 forward之前设定一下测试集的装载
+        self.Test_Loader = None  # self.get_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
+        self.Patch_Split_L = [2, 4, 8]
+        self.Saturation_L = [2, 8, 16, 64, 1024]
+        self.Loss_Acc = None
 
-    def train_attack(self, Model, Random_Start=False):
-        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
-        return atk
-
-    def test_attack(self, Model, Random_Start=False):
-        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
-        # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
-        return atk
-
-    def get_train_test_loader(self, Data_Set='CIFAR10'):
+    def get_test_loader(self, Data_Set, Transform_Type, Level):
         # 全局取消证书验证
         import ssl
         import random
@@ -120,16 +109,18 @@ class Trainer():
                 img = torch.cat(imgs, dim=2)
                 return img
 
-        data_tf_cifar10 = transforms.Compose([
-            transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-        ])
+        if Transform_Type == 'Saturation':
+            Extra_Transform = Saturation_Transform(saturation_level=Level)
+        elif Transform_Type == 'Patch':
+            Extra_Transform = Patch_Transform(k=Level)
+        else:
+            Extra_Transform = transforms.ToTensor()
 
         data_tf_cifar10_test = transforms.Compose([
             transforms.ToTensor(),
             # Saturation_Transform(saturation_level=1024.),
-            Patch_Transform(k=4),
+            # Patch_Transform(k=4),
+            Extra_Transform
         ])
 
         data_tf_mnist = transforms.Compose([
@@ -137,40 +128,50 @@ class Trainer():
         ])
 
         if Data_Set == 'CIFAR10':
-            train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
-                                             download=True)
+            # train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
+            #                                  download=True)
             test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_cifar10_test)
         else:
-            train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
+            # train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
 
-        Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
+        # Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)
-        return Train_Loader, Test_Loader
+        return Test_Loader
 
-    def save_mutual_info_data(self, std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
+    def train_attack(self, Model, Random_Start=False):
+        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+        return atk
+
+    def test_attack(self, Model, Random_Start=False):
+        # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
+        # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
+        return atk
+
+    def save_mutual_info_data(self, Transform_Type, Enable_Adv_Training):
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
         Model_Name, Forward_Size, Forward_Repeat = self.Model_Name, self.Forward_Size, self.Forward_Repeat
-        dir = 'Checkpoint/%s' % Model_Name
+        dir = 'Checkpoint/%s/%s' % (Model_Name, Transform_Type)
         # 对于每一个模型产生的数据, 使用一个文件夹单独存放
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        basic_info = {'Model': Model_Name,
-                      'Enable_Adv_Training': Enable_Adv_Training,
-                      'Forward_Size': Forward_Size,
-                      'Forward_Repeat': Forward_Repeat,
-                      }
+        mi_loss_acc = {'Model': Model_Name,
+                       'Enable_Adv_Training': Enable_Adv_Training,
+                       'Forward_Size': Forward_Size,
+                       'Forward_Repeat': Forward_Repeat,
+                       'std_estimator': self.std_estimator,
+                       'adv_estimator': self.adv_estimator,
+                       'loss_acc': self.Loss_Acc
+                       }
 
-        std, adv = std_estimator, adv_estimator
-        with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(basic_info, f)
-        with open('./Checkpoint/%s/loss_and_acc_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(analytic_data, f)
-        with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(std, f)
-        with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(adv, f)
+        with open('./Checkpoint/%s/%s/mi_loss_acc_%s.pkl' % (Model_Name, Transform_Type, Is_Adv_Training), 'wb') as f:
+            pickle.dump(mi_loss_acc, f)
 
     @torch.no_grad()
     def get_clean_or_adv_image(self, Model, Keep_Clean):
@@ -271,184 +272,275 @@ class Trainer():
         acc = correct_N * 100. / total_N
         return acc, loss / self.Forward_Repeat
 
-    def training(self, Enable_Adv_Training):
-        print("Model Structure\n", self.Origin_Model)
-        import copy
-        Model = copy.deepcopy(self.Origin_Model)
-
-        train_loss = []
-        train_acc = []
-        test_clean_acc, test_adv_acc = [], []
-        test_clean_loss, test_adv_loss = [], []
-
-        if Enable_Adv_Training:
-            optimizer = optim.SGD(Model.parameters(),
-                                  lr=self.Learning_Rate,
-                                  momentum=0.9,
-                                  weight_decay=2e-4
-                                  )
-        else:
-            optimizer = optim.SGD(Model.parameters(),
-                                  lr=self.Learning_Rate,
-                                  momentum=0.9,
-                                  )
-            # optimizer = optim.Adam(Model.parameters(),
-            #                        lr=self.Learning_Rate)
-
-        # milestones = [int(self.Std_Epoch_Num * 0.2) + 1, int(self.Std_Epoch_Num * 0.6) + 1]
-        # milestones = [200]
-        # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=0.1)
-        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 60], gamma=0.5)
-
-        criterion = nn.CrossEntropyLoss()
+    def forward(self, Model, Transform_Type, Enable_Adv_Training):
+        test_clean_acc_L, test_adv_acc_L = [], []
+        test_clean_loss_L, test_adv_loss_L = [], []
 
         # Load checkpoint.
-        # if Enable_Adv_Training:
-        #     # 装载训练好的模型
-        #     print('--> %s is adv training...' % Model_Name)
-        #     print('--> Loading Model state dict..')
-        #     load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-        #     print('--> Load checkpoint successfully! ')
+        if Enable_Adv_Training:
+            # 装载训练好的模型
+            print('--> Loading AT-Model %s state dict..' % self.Model_Name)
+            load_model(Model, './Checkpoint/%s/%s_adv.pth' % (self.Model_Name, self.Model_Name))
+        else:
+            print('--> Loading STD-Model %s state dict..' % self.Model_Name)
+            load_model(Model, './Checkpoint/%s/%s_std.pth' % (self.Model_Name, self.Model_Name))
+        print('--> Load checkpoint successfully! ')
 
         Model = Model.to(self.Device)
-        Model.train()
+        Model.eval()
 
-        for epoch_i in range(self.Std_Epoch_Num):
+        if Transform_Type == 'Saturation':
+            Level_L = self.Saturation_L
+        elif Transform_Type == 'Patch':
+            Level_L = self.Patch_Split_L
+        else:
+            Level_L = None
 
-            train_loss_sum, train_acc_sum, sample_sum = 0.0, 0.0, 0
+        for level in Level_L:
+            # 设定好特定的装载程序之后前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
+            self.Test_Loader = self.get_test_loader(Data_Set=args.Data_Set, Transform_Type=Transform_Type, Level=level)
 
-            # 在每次训练之前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
-            # if (epoch_i + 1) % 3 == 0:
-            epoch_test_clean_acc, epoch_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
-            epoch_test_adv_acc, epoch_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
+            level_i_test_clean_acc, level_i_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
+            level_i_test_adv_acc, level_i_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
             # 在验证集上的干净样本准确率，对抗样本准确率,loss
-            test_clean_acc.append(epoch_test_clean_acc)
-            test_adv_acc.append(epoch_test_adv_acc)
+            test_clean_acc_L.append(level_i_test_clean_acc)
+            test_adv_acc_L.append(level_i_test_adv_acc)
 
-            test_clean_loss.append(epoch_test_clean_loss)
-            test_adv_loss.append(epoch_test_adv_loss)
-
-            for batch_images, batch_labels in self.Train_Loader:
-
-                # data moved to GPU
-                batch_labels = batch_labels.to(self.Device)
-                batch_images = batch_images.to(self.Device)
-
-                if Enable_Adv_Training:
-                    atk = self.train_attack(Model, Random_Start=True)
-                    batch_images = atk(batch_images, batch_labels)
-
-                outputs = Model(batch_images)
-
-                if epoch_i == 0 and sample_sum == 0:
-                    print(self.Device)
-                    print(batch_images.shape, batch_labels.shape, outputs.shape)
-                    # print(batch_labels, outputs)
-
-                loss = criterion(outputs, batch_labels)
-
-                # zero the gradient cache
-                optimizer.zero_grad()
-                # backpropagation
-                loss.backward()
-                # update weights and bias
-                optimizer.step()
-                scheduler.step()
-
-                train_loss_sum += loss.item()
-                _, predicted_label = torch.max(outputs.data, dim=1)
-                train_acc_sum += predicted_label.eq(batch_labels.data).cpu().sum().item()
-                sample_sum += batch_images.shape[0]
-
-            # 记录每一轮的训练集准确度，损失，测试集准确度
-            train_loss.append(train_loss_sum / len(self.Train_Loader))
-            # 训练准确率
-            epoch_train_acc = (train_acc_sum / sample_sum) * 100.0
-            train_acc.append(epoch_train_acc)
+            test_clean_loss_L.append(level_i_test_clean_loss)
+            test_adv_loss_L.append(level_i_test_adv_loss)
 
             # print some data
-            print('epoch_i[%d] '
-                  'train_loss[%.2f], test_clean_loss[%.2f], test_adv_loss[%.2f] '
-                  'train_acc[%.2f%%],test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
-                  % (epoch_i + 1,
-                     train_loss_sum / len(self.Train_Loader), epoch_test_clean_loss, epoch_test_adv_loss,
-                     epoch_train_acc, epoch_test_clean_acc, epoch_test_adv_acc))
+            print('Saturation level_i[%d] '
+                  'test_clean_loss[%.2f], test_adv_loss[%.2f] '
+                  'test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
+                  % (level,
+                     level_i_test_clean_loss, level_i_test_adv_loss,
+                     level_i_test_clean_acc, level_i_test_adv_acc))
 
-        # Save checkpoint.
-        file_name = "./Checkpoint/%s_%s.pth" % (self.Model_Name, 'adv' if Enable_Adv_Training else 'std')
-        save_model(Model, file_name)
-
-        analytic_data = {
-            'train_loss': train_loss,
-            'test_clean_loss': test_clean_loss,
-            'test_adv_loss': test_adv_loss,
-            'train_acc': train_acc,
-            'test_clean_acc': test_clean_acc,
-            'test_adv_acc': test_adv_acc
+        loss_acc = {
+            'test_clean_loss': test_clean_loss_L,
+            'test_adv_loss': test_adv_loss_L,
+            'test_clean_acc': test_clean_acc_L,
+            'test_adv_acc': test_adv_acc_L
         }
         # plot_performance(analytic_data, Enable_Adv_Training)
-        self.save_mutual_info_data(self.std_estimator, self.adv_estimator, analytic_data, Enable_Adv_Training)
-        # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper, std_estimator.epoch_MI_hM_Y_upper, title='std_upper')
-        # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_bin, std_estimator.epoch_MI_hM_Y_bin, title='std_bin')
-        # plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_upper, adv_estimator.epoch_MI_hM_Y_upper, title='adv_upper')
-        # plot_mutual_info_2(adv_estimator.epoch_MI_hM_X_bin, adv_estimator.epoch_MI_hM_Y_bin, title='adv_bin')
+        self.Loss_Acc = loss_acc
+        self.save_mutual_info_data(Transform_Type, Enable_Adv_Training)
         """
         在退出训练之前完成清理工作
         """
         self.std_estimator.clear_all()
         self.adv_estimator.clear_all()
+        self.Loss_Acc = None
         print('the training has completed')
-        return analytic_data
 
-    def only_forward(self, Model, Enable_Adv_Training):
+    def plot_data(self, Transform_Type, Enable_Adv_Training):
+        from pylab import mpl
 
-        Model = Model.to(self.Device)
-        Model.eval()
+        mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+        mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+        mpl.rcParams['figure.constrained_layout.use'] = True
+        plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
+        plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
-        epoch_test_clean_acc, epoch_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
-        epoch_test_adv_acc, epoch_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
-        print('test_clean_acc[%.2f], test_clean_loss[%.2f],test_adv_acc[%.2f], test_adv_loss[%.2f]' % (
-            epoch_test_clean_acc, epoch_test_clean_loss, epoch_test_adv_acc, epoch_test_adv_loss))
-        analytic_data = {
-            'train_loss': [0.],
-            'test_clean_loss': [epoch_test_clean_loss],
-            'test_adv_loss': [epoch_test_adv_loss],
-            'train_acc': [0],
-            'test_clean_acc': [epoch_test_clean_acc],
-            'test_adv_acc': [epoch_test_adv_acc]
-        }
-
-        # plot_performance(analytic_data, Enable_Adv_Training)
-
+        from matplotlib.lines import Line2D
+        line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
+                        Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+        import math
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-        Model_Name, Forward_Size, Forward_Repeat = self.Model_Name, self.Forward_Size, self.Forward_Repeat
-        dir = 'Checkpoint/%s/only_forward' % Model_Name
-        # 对于每一个模型产生的数据, 使用一个文件夹单独存放
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        Model_Name = self.Model_Name
+        with open('./Checkpoint/%s/%s/mi_loss_acc_%s.pkl' % (Model_Name, Transform_Type, Is_Adv_Training), 'rb') as f:
+            mi_loss_acc = pickle.load(f)
 
-        basic_info = {'Model': Model_Name,
-                      'Enable_Adv_Training': Enable_Adv_Training,
-                      'Forward_Size': Forward_Size,
-                      'Forward_Repeat': Forward_Repeat,
-                      }
+        Forward_Size, Forward_Repeat = mi_loss_acc['Forward_Size'], mi_loss_acc['Forward_Repeat']
+        std, adv = mi_loss_acc['std_estimator'], mi_loss_acc['adv_estimator']
+        # Model_Name = basic_info['Model']
+        Activation_F = 'relu'
+        Learning_Rate = 0.08
 
-        with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(basic_info, f)
-        with open('./Checkpoint/%s/loss_and_acc_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(analytic_data, f)
-        with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(self.std_estimator, f)
-        with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
-            pickle.dump(self.adv_estimator, f)
+        Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
+        Epochs = [i for i in range(Std_Epoch_Num)]
+        Layer_Num = len(std.epoch_MI_hM_X_upper[0])
+        Layer_Name = [str(i) for i in range(Layer_Num)]
 
-        """
-        在退出之前完成清理工作
-        """
-        self.std_estimator.clear_all()
-        self.adv_estimator.clear_all()
-        print('the only forward has completed')
-        return analytic_data
+        # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+        sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+
+        title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s,%s" % (
+            Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training, Transform_Type
+        )
+
+        def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type):
+            std_I_TX = np.array(std_I_TX)
+            std_I_TY = np.array(std_I_TY)
+            adv_I_TX = np.array(adv_I_TX)
+            adv_I_TY = np.array(adv_I_TY)
+
+            # 设定坐标范围
+            i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
+            i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX))) + 0.5
+
+            i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
+            i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.5
+
+            for epoch_i in range(Std_Epoch_Num):
+                c = sm.to_rgba(epoch_i + 1)
+                # layers = [i for i in range(1,len(I_TX)+1)]
+                std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
+                adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+
+                axs[0].set_title(MI_Type)
+
+                axs[0].legend(line_legends, ['std', 'adv'])
+                axs[1].legend(line_legends, ['std', 'adv'])
+
+                axs[0].plot(Layer_Name, std_I_TX_epoch_i,
+                            color=c, marker='o',
+                            linestyle='-', linewidth=1,
+                            )
+                axs[1].plot(Layer_Name, adv_I_TX_epoch_i,
+                            color=c, marker='^',
+                            linestyle='--', linewidth=1,
+                            )
+
+                axs[0].set_ylim((i_tx_min, i_tx_max))
+                axs[1].set_ylim((i_tx_min, i_tx_max))
+
+                axs[2].plot(Layer_Name, std_I_TY_epoch_i,
+                            color=c, marker='o',
+                            linestyle='-', linewidth=1,
+                            )
+                axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
+                            color=c, marker='^',
+                            linestyle='--', linewidth=1,
+                            )
+
+                axs[2].set_ylim((i_ty_min, i_ty_max))
+                axs[3].set_ylim((i_ty_min, i_ty_max))
+
+        # fig size, 先列后行
+        nrows = 4
+        ncols = 4
+        fig, axs = plt.subplots(nrows, ncols, figsize=(15, 15), )
+
+        # 初始化 xlabel, y_label
+        for i in range(nrows - 1):
+            for j in range(ncols):
+                axs[i][j].grid(True)
+                if j < 2:
+                    axs[i][j].set_xlabel('layers')
+                    axs[i][j].set_ylabel(r'$I(T;X)$')
+
+                else:
+                    axs[i][j].set_xlabel('layers')
+                    axs[i][j].set_ylabel(r'$I(T;Y)$')
+
+        # range(开始，结束，步长)
+        # 绘制每一轮次的信息曲线
+
+        # std/adv Upper
+        axs_plot(axs[0],
+                 std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
+                 adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
+                 Std_Epoch_Num, MI_Type='upper'
+                 )
+        # std/adv Lower
+        axs_plot(axs[1],
+                 std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
+                 adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
+                 Std_Epoch_Num, MI_Type='lower'
+                 )
+        # std/adv Bin
+        axs_plot(axs[2],
+                 std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
+                 adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
+                 Std_Epoch_Num, MI_Type='bin'
+                 )
+
+        # plt.scatter(I_TX, I_TY,
+        #             color=c,
+        #             linestyle='-', linewidth=0.1,
+        #             zorder=2
+        #             )
+        # -------------------------------------------Loss and Accuracy Detail---------------------
+        # for idx, (k, v) in enumerate(analytic_data.items()):
+        axs[nrows - 1][0].set_xlabel('epochs')
+        axs[nrows - 1][0].set_title('loss')
+        # axs[nrows - 1][0].plot(Epochs, mi_loss_acc['train_loss'], label='train_loss')
+        axs[nrows - 1][0].plot(Epochs, mi_loss_acc['loss_acc']['test_clean_loss'], label='test_clean_loss')
+        axs[nrows - 1][0].plot(Epochs, mi_loss_acc['loss_acc']['test_adv_loss'], label='test_adv_loss')
+        axs[nrows - 1][0].legend()
+        # -------------------
+        axs[nrows - 1][1].set_xlabel('epochs')
+        axs[nrows - 1][1].set_title('acc')
+        # axs[nrows - 1][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
+        axs[nrows - 1][1].plot(Epochs, mi_loss_acc['loss_acc']['test_clean_acc'], label='test_clean_acc')
+        axs[nrows - 1][1].plot(Epochs, mi_loss_acc['loss_acc']['test_adv_acc'], label='test_adv_acc')
+        axs[nrows - 1][1].legend()
+
+        # plt.scatter(epoch_MI_hM_X_upper[0], epoch_MI_hM_Y_upper[0])
+        # plt.legend()
+
+        fig.suptitle(title)
+        fig.colorbar(sm, ax=axs, label='Epoch')
+
+        # fig = plt.gcf()
+        # if Enable_Show:
+        plt.show()
+        fig.savefig('mutual_info_%s_%s_%s.pdf' % (
+            Model_Name, Is_Adv_Training,
+            datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+
+        # -------------------------------------------Mutual Information Detail---------------------
+        # 设定坐标范围
+        # i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
+        # i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
+        #
+        # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
+        # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
+        Enable_Detail = False
+        if Enable_Detail:
+            fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
+            std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
+            adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
+            # C0-C9 是 matplotlib 里经常使用的色条
+            COLOR = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5',
+                     'C6', 'C7', 'C8', 'C9', 'olive', 'peach', ]
+
+            for layer_i in range(Layer_Num):
+                axs[0][layer_i].set_xlabel('epochs')
+                axs[0][layer_i].set_title('Std Layer %d' % layer_i)
+                # epoch_i, layer_i, label_i
+                axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
+                                     color=COLOR[0],
+                                     label=r'$H_{Lower}(T_i)$')
+
+                axs[1][layer_i].set_xlabel('epochs')
+                axs[1][layer_i].set_title('Adv Layer %d' % layer_i)
+                axs[1][layer_i].plot(Epochs, adv_lower_detail[..., layer_i, -1],
+                                     color=COLOR[0],
+                                     label=r'$H_{Lower}(T_i)$')
+
+                for label_i in [i for i in range(10)]:
+                    # epoch_i, layer_i, label_i
+                    std_temp_data = std_lower_detail[..., layer_i, label_i]
+                    axs[0][layer_i].plot(Epochs, std_temp_data,
+                                         color=COLOR[label_i + 1],
+                                         label=r'$H(T_i|y_%d)$' % (label_i))
+                    adv_temp_data = std_lower_detail[..., layer_i, label_i]
+                    axs[1][layer_i].plot(Epochs, adv_temp_data,
+                                         color=COLOR[label_i + 1],
+                                         label=r'$H(T_i|y_%d)$' % (label_i))
+                if layer_i == 0:
+                    axs[0][0].legend(ncol=2)
+
+            title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
+                Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
+            )
+            fig.suptitle(title)
+            plt.show()
+            fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+        print("Work has done!")
 
     def calculate_transfer_matrix(self, Model, Enable_Adv_Training=False):
         # 计算模型的对样本的分类情况，以及置信度
@@ -579,15 +671,20 @@ if __name__ == '__main__':
     Data_Set = args.Data_Set
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
-    Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
-    # Trainer_0.training(Enable_Adv_Training=False)
-    # Trainer_0.training(Enable_Adv_Training=True)
-    # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
+    Forward_0 = Forward(Model, Model_Name, Data_Set, args)
+    # Forward_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
-    load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-    Trainer_0.only_forward(Model, Enable_Adv_Training=False)
-    load_model(Model, './Checkpoint/%s_adv.pth' % Model_Name)
-    Trainer_0.only_forward(Model, Enable_Adv_Training=True)
+    # Forward_0.forward(Model, Enable_Adv_Training=False)
+    # Forward_0.forward(Model, Enable_Adv_Training=True)
+
+    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
+    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
+
+    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
+    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
+
+    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
+    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
 
     # pass
 
