@@ -377,11 +377,17 @@ class Forward():
             adv_I_TY = np.array(adv_I_TY)
 
             # 设定坐标范围
-            i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
-            i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX))) + 0.5
+            # i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.1
+            # i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX))) + 0.1
+            #
+            # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.1
+            # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.1
 
-            i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
-            i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.5
+            i_tx_min = min(np.min(std_I_TX), np.min(adv_I_TX)) - 0.1
+            i_tx_max = max(np.max(std_I_TX), np.max(adv_I_TX)) + 0.1
+
+            i_ty_min = min(np.min(std_I_TY), np.min(adv_I_TY)) - 0.1
+            i_ty_max = max(np.max(std_I_TY), np.max(adv_I_TY)) + 0.1
 
             for epoch_i in range(Std_Epoch_Num):
                 c = sm.to_rgba(epoch_i + 1)
@@ -402,7 +408,7 @@ class Forward():
                             color=c, marker='^',
                             linestyle='--', linewidth=1,
                             )
-
+                # 设定 x 轴坐标范围
                 axs[0].set_ylim((i_tx_min, i_tx_max))
                 axs[1].set_ylim((i_tx_min, i_tx_max))
 
@@ -414,7 +420,7 @@ class Forward():
                             color=c, marker='^',
                             linestyle='--', linewidth=1,
                             )
-
+                # 设定 y 轴坐标范围
                 axs[2].set_ylim((i_ty_min, i_ty_max))
                 axs[3].set_ylim((i_ty_min, i_ty_max))
 
@@ -680,8 +686,8 @@ if __name__ == '__main__':
     # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
     # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
 
-    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
-    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
+    # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
+    # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
 
     Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
     Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
