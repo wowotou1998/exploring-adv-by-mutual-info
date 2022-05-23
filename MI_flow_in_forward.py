@@ -683,14 +683,14 @@ if __name__ == '__main__':
     # Forward_0.forward(Model, Enable_Adv_Training=False)
     # Forward_0.forward(Model, Enable_Adv_Training=True)
 
-    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
-    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
+    Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
+    Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
 
     # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
     # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
 
-    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
-    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
+    # Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
+    # Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
 
     # pass
 
