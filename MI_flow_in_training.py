@@ -36,8 +36,8 @@ class Trainer():
         self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
-        self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
-        self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
+        self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False, Label_Num=10)
+        self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False, Label_Num=10)
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
@@ -59,67 +59,6 @@ class Trainer():
         import random
         ssl._create_default_https_context = ssl._create_unverified_context
 
-        class Saturation_Transform(object):
-            '''
-            for each pixel v: v' = sign(2v - 1) * |2v - 1|^{2/p}  * 0.5 + 0.5
-            then clip -> (0, 1)
-            '''
-
-            def __init__(self, saturation_level=2.0):
-                self.p = saturation_level
-
-            def __call__(self, img):
-                ones = torch.ones_like(img)
-                # print(img.size(), torch.max(img), torch.min(img))
-                ret_img = torch.sign(2 * img - ones) * torch.pow(torch.abs(2 * img - ones), 2.0 / self.p)
-
-                ret_img = ret_img * 0.5 + ones * 0.5
-
-                ret_img = torch.clamp(ret_img, 0, 1)
-
-                return ret_img
-
-        class Patch_Transform(object):
-            def __init__(self, k=2):
-                self.k = k
-
-            def __call__(self, xtensor: torch.Tensor):
-                '''
-                X: torch.Tensor of shape(c, h, w)   h % self.k == 0
-                :param xtensor:
-                :return:
-                '''
-                patches = []
-                c, h, w = xtensor.size()
-                dh = h // self.k
-                dw = w // self.k
-
-                # print(dh, dw)
-                sh = 0
-                for i in range(h // dh):
-                    eh = sh + dh
-                    eh = min(eh, h)
-                    sw = 0
-                    for j in range(w // dw):
-                        ew = sw + dw
-                        ew = min(ew, w)
-                        patches.append(xtensor[:, sh:eh, sw:ew])
-
-                        # print(sh, eh, sw, ew)
-                        sw = ew
-                    sh = eh
-
-                random.shuffle(patches)
-
-                start = 0
-                imgs = []
-                for i in range(self.k):
-                    end = start + self.k
-                    imgs.append(torch.cat(patches[start:end], dim=1))
-                    start = end
-                img = torch.cat(imgs, dim=2)
-                return img
-
         data_tf_cifar10 = transforms.Compose([
             transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
             transforms.RandomHorizontalFlip(),
@@ -128,8 +67,6 @@ class Trainer():
 
         data_tf_cifar10_test = transforms.Compose([
             transforms.ToTensor(),
-            # Saturation_Transform(saturation_level=1024.),
-            Patch_Transform(k=4),
         ])
 
         data_tf_mnist = transforms.Compose([
@@ -140,6 +77,8 @@ class Trainer():
             train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
                                              download=True)
             test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_cifar10_test)
+        elif Data_Set == 'TinyImageNet':
+            pass
         else:
             train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
