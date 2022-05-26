@@ -453,7 +453,7 @@ class Train_VIB(object):
         nrows = 1
         ncols = 4
         # A4 纸大小 8.27 * 11.69
-        fig, axs = plt.subplots(nrows, ncols, figsize=(8, 3), squeeze=False)
+        fig, axs = plt.subplots(nrows, ncols, figsize=(8, 2), squeeze=False)
 
         # 初始化 xlabel, y_label
         for i in range(nrows - 1):

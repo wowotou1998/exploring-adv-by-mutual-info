@@ -13,6 +13,7 @@ from utils import *
 from torchattacks import PGD
 import pickle
 import torch.nn.functional as F
+from Tiny_ImageNet_Loader import *
 
 
 # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
@@ -36,8 +37,12 @@ class Trainer():
         self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
-        self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False, Label_Num=10)
-        self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False, Label_Num=10)
+        self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
+                                                   By_Layer_Name=False,
+                                                   Label_Num=args.Label_Num)
+        self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
+                                                   By_Layer_Name=False,
+                                                   Label_Num=args.Label_Num)
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
@@ -64,24 +69,27 @@ class Trainer():
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
         ])
-
-        data_tf_cifar10_test = transforms.Compose([
+        data_tf_tiny_imagenet = transforms.Compose([
+            transforms.RandomCrop(64, padding=4, fill=0, padding_mode='constant'),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
         ])
 
-        data_tf_mnist = transforms.Compose([
+        tensor_transform = transforms.Compose([
             transforms.ToTensor(),
         ])
 
         if Data_Set == 'CIFAR10':
             train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
                                              download=True)
-            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_cifar10_test)
+            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=tensor_transform)
         elif Data_Set == 'TinyImageNet':
-            pass
+            train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_tiny_imagenet)
+            test_dataset = TestTinyImageNetDataset(id=get_id_dict(), transform=tensor_transform)
         else:
-            train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
-            test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
+            train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=tensor_transform,
+                                           download=True)
+            test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=tensor_transform)
 
         Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)
@@ -500,17 +508,19 @@ if __name__ == '__main__':
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
     Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet(depth=1 * 6 + 4, num_classes=200, widen_factor=1, dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
-    parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
+    parser.add_argument('--Model_Name', default='WideResNet_Tiny_ImageNet', type=str, help='The Model_Name.')
+    parser.add_argument('--Label_Num', default=200, type=int, help='The Label_Num.')
+    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Size', default=100, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
-    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
+    parser.add_argument('--Data_Set', default='TinyImageNet', type=str, help='The Data_Set.')
     parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
 
     args = parser.parse_args()
@@ -519,14 +529,14 @@ if __name__ == '__main__':
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
     Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
-    # Trainer_0.training(Enable_Adv_Training=False)
-    # Trainer_0.training(Enable_Adv_Training=True)
+    Trainer_0.training(Enable_Adv_Training=False)
+    Trainer_0.training(Enable_Adv_Training=True)
     # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
-    load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
-    Trainer_0.only_forward(Model, Enable_Adv_Training=False)
-    load_model(Model, './Checkpoint/%s_adv.pth' % Model_Name)
-    Trainer_0.only_forward(Model, Enable_Adv_Training=True)
+    # load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)
+    # Trainer_0.only_forward(Model, Enable_Adv_Training=False)
+    # load_model(Model, './Checkpoint/%s_adv.pth' % Model_Name)
+    # Trainer_0.only_forward(Model, Enable_Adv_Training=True)
 
     # pass
 
