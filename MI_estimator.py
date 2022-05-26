@@ -15,7 +15,10 @@ layer_activations 可能会包含 nn.sequential 中的子模块， 可能实际 
 
 
 class mutual_info_estimator(object):
-    def __init__(self, modules_to_hook, By_Layer_Name=False, Label_Num=10):
+    def __init__(self, modules_to_hook,
+                 By_Layer_Name=False,
+                 Label_Num=10,
+                 Enable_Detail=False):
         # 根据modules_to_hook中元素的类型是不是字符串对象来判断
         self.Label_Num = Label_Num
         self.By_Layer_Name = isinstance(modules_to_hook[0], str)
@@ -23,6 +26,7 @@ class mutual_info_estimator(object):
         self.DO_LOWER = True
         self.DO_UPPER = True
         self.DO_BIN = True
+        self.Enable_Detail = Enable_Detail
 
         # self.DO_MINE = False
 
@@ -227,6 +231,7 @@ class mutual_info_estimator(object):
                     依次选择激活层i中有关于标签j的激活值， 并计算这部分激活值的的互信息
                     """
                     # 获取第i层激活值关于标签i的部分， 使用bool索引
+
                     activation_i_for_Y_i = layer_i_activations[Y_i_idx[y_i], :]
                     hM_given_Y_i_lower = entropy_estimator_bd(activation_i_for_Y_i, noise_variance)
                     hM_given_Y_lower += Y_probs[y_i].item() * hM_given_Y_i_lower
@@ -234,11 +239,13 @@ class mutual_info_estimator(object):
                     # 存储 H(T|y) 的信息 以及 p(y) 的概率
                     # 这里感觉没必要把各个类别出现的经验概率值记录下来
                     # layer_i_lower_detail.append(Y_probs[y_i].item())
-                    layer_i_lower_detail.append(nats2bits * hM_given_Y_i_lower)
-
-                layer_i_lower_detail.append(nats2bits * hM_lower)
+                    if self.Enable_Detail:
+                        layer_i_lower_detail.append(nats2bits * hM_given_Y_i_lower)
+                if self.Enable_Detail:
+                    layer_i_lower_detail.append(nats2bits * hM_lower)
                 MI_hM_Y_lower.append(nats2bits * (hM_lower - hM_given_Y_lower))
-                MI_hM_Y_lower_detail.append(layer_i_lower_detail)
+                if self.Enable_Detail:
+                    MI_hM_Y_lower_detail.append(layer_i_lower_detail)
 
             # -------- I(T;X), I(T;Y)  upper  --------
             if self.DO_UPPER:

@@ -29,6 +29,8 @@ def entropy_estimator_kl_simple(x, var):
     #  and Kolchinsky and Tracey, Nonlinear Information Bottleneck, 2017. Eq. 10
     # 返回维度和批次当做的采样个数
     N, dims = x.size(0) * 1.0, x.size(1) * 1.0
+    if N == 0:
+        return 0.0
     dists = calculate_dists_matrix(x)
     dists2 = dists / (2 * var)
     const = (dims / 2.0) * np.log(2 * np.pi * var)
@@ -41,7 +43,10 @@ def entropy_estimator_kl_simple(x, var):
 def entropy_estimator_bd(x, var):
     # Bhattacharyya-based lower bound on entropy of mixture of Gaussians with covariance matrix var * I 
     # see Kolchinsky and Tracey, Estimating Mixture Entropy with Pairwise Distances, Entropy, 2017. Section 4.
+
     N, dims = x.size(0) * 1.0, x.size(1) * 1.0
+    if N == 0:
+        return 0.0
     val = entropy_estimator_kl_simple(x, 4 * var)
     return val + np.log(0.25) * dims / 2
 

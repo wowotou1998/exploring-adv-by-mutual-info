@@ -39,10 +39,12 @@ class Trainer():
         self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
                                                    By_Layer_Name=False,
-                                                   Label_Num=args.Label_Num)
+                                                   Label_Num=args.Label_Num,
+                                                   Enable_Detail=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
                                                    By_Layer_Name=False,
-                                                   Label_Num=args.Label_Num)
+                                                   Label_Num=args.Label_Num,
+                                                   Enable_Detail=False)
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
@@ -497,6 +499,7 @@ if __name__ == '__main__':
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
     from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
+    from Models.Tiny_ImageNet import WideResNet_3_64_64
     import argparse
 
     Model_dict = {}
@@ -508,7 +511,8 @@ if __name__ == '__main__':
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
     Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
-    Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet(depth=1 * 6 + 4, num_classes=200, widen_factor=1, dropRate=0.0)
+    Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1,
+                                                                dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
