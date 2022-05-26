@@ -324,7 +324,10 @@ class Trainer():
                      epoch_train_acc, epoch_test_clean_acc, epoch_test_adv_acc))
 
         # Save checkpoint.
-        file_name = "./Checkpoint/%s_%s.pth" % (self.Model_Name, 'adv' if Enable_Adv_Training else 'std')
+        file_name = "./Checkpoint/%s/%s_%s.pth" % (
+            self.Model_Name,
+            self.Model_Name,
+            'adv' if Enable_Adv_Training else 'std')
         save_model(Model, file_name)
 
         analytic_data = {
@@ -518,10 +521,10 @@ if __name__ == '__main__':
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
     parser.add_argument('--Model_Name', default='WideResNet_Tiny_ImageNet', type=str, help='The Model_Name.')
     parser.add_argument('--Label_Num', default=200, type=int, help='The Label_Num.')
-    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
+    parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=100, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=200, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=20, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Data_Set', default='TinyImageNet', type=str, help='The Data_Set.')
