@@ -27,24 +27,24 @@ from Tiny_ImageNet_Loader import *
 
 
 class Trainer():
-    def __init__(self, Origin_Model, Model_Name, Data_Set, args):
+    def __init__(self, Origin_Model, args):
+        self.Model_Name = args.Model_Name
         self.Origin_Model = Origin_Model
-        self.Model_Name = Model_Name
         # self.Enable_Show = True
         self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
         self.Learning_Rate = args.Learning_Rate
         self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
-        self.Train_Loader, self.Test_Loader = self.get_train_test_loader(Data_Set)
+        self.Train_Loader, self.Test_Loader = self.get_train_test_loader(args.Data_Set)
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
                                                    By_Layer_Name=False,
                                                    Label_Num=args.Label_Num,
-                                                   Enable_Detail=False)
+                                                   Enable_Detail=True)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
                                                    By_Layer_Name=False,
                                                    Label_Num=args.Label_Num,
-                                                   Enable_Detail=False)
+                                                   Enable_Detail=True)
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
@@ -60,7 +60,7 @@ class Trainer():
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
-    def get_train_test_loader(self, Data_Set='CIFAR10'):
+    def get_train_test_loader(self, Data_Set):
         # 全局取消证书验证
         import ssl
         import random
@@ -94,10 +94,12 @@ class Trainer():
         elif Data_Set == 'TinyImageNet':
             train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_tiny_imagenet)
             test_dataset = TestTinyImageNetDataset(id=get_id_dict(), transform=tensor_transform)
-        else:
+        elif Data_Set == 'MNIST':
             train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=tensor_transform,
                                            download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=tensor_transform)
+        else:
+            raise RuntimeError('invaild data set')
 
         Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)
@@ -227,7 +229,10 @@ class Trainer():
         return acc, loss / self.Forward_Repeat
 
     def training(self, Enable_Adv_Training):
-        print("Model Structure\n", self.Origin_Model)
+        checkpoint_path_dir = "Checkpoint/%s" % (self.Model_Name)
+        if not os.path.exists(checkpoint_path_dir):
+            os.makedirs(checkpoint_path_dir)
+
         import copy
         Model = copy.deepcopy(self.Origin_Model)
 
@@ -330,11 +335,11 @@ class Trainer():
                      epoch_train_acc, epoch_test_clean_acc, epoch_test_adv_acc))
 
         # Save checkpoint.
-        file_name = "./Checkpoint/%s/%s_%s.pth" % (
+        checkpoint_path = "./Checkpoint/%s/%s_%s.pth" % (
             self.Model_Name,
             self.Model_Name,
             'adv' if Enable_Adv_Training else 'std')
-        save_model(Model, file_name)
+        save_model(Model, checkpoint_path)
 
         analytic_data = {
             'train_loss': train_loss,
@@ -542,7 +547,7 @@ if __name__ == '__main__':
     Data_Set = args.Data_Set
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
-    Trainer_0 = Trainer(Model, Model_Name, Data_Set, args)
+    Trainer_0 = Trainer(Model, args)
     Trainer_0.training(Enable_Adv_Training=False)
     Trainer_0.training(Enable_Adv_Training=True)
     # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
