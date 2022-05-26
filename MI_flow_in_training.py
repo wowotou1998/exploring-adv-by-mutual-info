@@ -84,7 +84,13 @@ class Trainer():
         if Data_Set == 'CIFAR10':
             train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
                                              download=True)
-            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=tensor_transform)
+            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=tensor_transform,
+                                            download=True)
+        elif Data_Set == 'SVHN':
+            train_dataset = datasets.SVHN(root='./DataSet/SVHN', split='train', transform=data_tf_cifar10,
+                                          download=True)
+            test_dataset = datasets.SVHN(root='./DataSet/CIFAR10', split='test', transform=tensor_transform,
+                                         download=True)
         elif Data_Set == 'TinyImageNet':
             train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_tiny_imagenet)
             test_dataset = TestTinyImageNetDataset(id=get_id_dict(), transform=tensor_transform)
@@ -524,7 +530,7 @@ if __name__ == '__main__':
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=200, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=20, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Data_Set', default='TinyImageNet', type=str, help='The Data_Set.')
