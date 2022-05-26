@@ -89,7 +89,7 @@ class Trainer():
         elif Data_Set == 'SVHN':
             train_dataset = datasets.SVHN(root='./DataSet/SVHN', split='train', transform=data_tf_cifar10,
                                           download=True)
-            test_dataset = datasets.SVHN(root='./DataSet/CIFAR10', split='test', transform=tensor_transform,
+            test_dataset = datasets.SVHN(root='./DataSet/SVHN', split='test', transform=tensor_transform,
                                          download=True)
         elif Data_Set == 'TinyImageNet':
             train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_tiny_imagenet)
@@ -520,20 +520,21 @@ if __name__ == '__main__':
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
     Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    Model_dict['WideResNet_SVHN'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
     Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1,
                                                                 dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_Tiny_ImageNet', type=str, help='The Model_Name.')
-    parser.add_argument('--Label_Num', default=200, type=int, help='The Label_Num.')
+    parser.add_argument('--Model_Name', default='WideResNet_SVHN', type=str, help='The Model_Name.')
+    parser.add_argument('--Label_Num', default=10, type=int, help='The Label_Num.')
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=200, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=5, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
-    parser.add_argument('--Data_Set', default='TinyImageNet', type=str, help='The Data_Set.')
+    parser.add_argument('--Data_Set', default='SVHN', type=str, help='The Data_Set.')
     parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
 
     args = parser.parse_args()
