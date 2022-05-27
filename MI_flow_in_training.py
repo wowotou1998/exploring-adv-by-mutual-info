@@ -28,6 +28,7 @@ from Tiny_ImageNet_Loader import *
 
 class Trainer():
     def __init__(self, Origin_Model, args):
+        self.Args = args
         self.Model_Name = args.Model_Name
         self.Origin_Model = Origin_Model
         # self.Enable_Show = True
@@ -36,7 +37,7 @@ class Trainer():
         self.Learning_Rate = args.Learning_Rate
         self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
-        self.Train_Loader, self.Test_Loader = self.get_train_test_loader(args.Data_Set)
+        self.Train_Loader, self.Test_Loader = self.get_train_test_loader()
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook,
                                                    By_Layer_Name=False,
                                                    Label_Num=args.Label_Num,
@@ -48,31 +49,37 @@ class Trainer():
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=self.Args.Eps, alpha=self.Args.Alpha, steps=self.Args.Step, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
     def test_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=self.Args.Eps, alpha=self.Args.Alpha, steps=self.Args.Step, random_start=Random_Start)
         # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
-    def get_train_test_loader(self, Data_Set):
+    def get_train_test_loader(self):
         # 全局取消证书验证
         import ssl
         import random
         ssl._create_default_https_context = ssl._create_unverified_context
 
-        data_tf_cifar10 = transforms.Compose([
+        data_tf_3_32_32 = transforms.Compose([
             transforms.RandomCrop(32, padding=4, fill=0, padding_mode='constant'),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
         ])
-        data_tf_tiny_imagenet = transforms.Compose([
+        data_tf_3_64_64 = transforms.Compose([
             transforms.RandomCrop(64, padding=4, fill=0, padding_mode='constant'),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ])
+
+        data_tf_3_96_96 = transforms.Compose([
+            transforms.RandomCrop(96, padding=4, fill=0, padding_mode='constant'),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
         ])
@@ -80,19 +87,24 @@ class Trainer():
         tensor_transform = transforms.Compose([
             transforms.ToTensor(),
         ])
-
+        Data_Set = self.Args.Data_Set
         if Data_Set == 'CIFAR10':
-            train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
+            train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_3_32_32,
                                              download=True)
             test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=tensor_transform,
                                             download=True)
+        elif Data_Set == 'STL10':
+            train_dataset = datasets.STL10(root='./DataSet/STL10', split='train', transform=data_tf_3_96_96,
+                                           download=True)
+            test_dataset = datasets.STL10(root='./DataSet/STL10', split='test', transform=tensor_transform,
+                                          download=True)
         elif Data_Set == 'SVHN':
-            train_dataset = datasets.SVHN(root='./DataSet/SVHN', split='train', transform=data_tf_cifar10,
+            train_dataset = datasets.SVHN(root='./DataSet/SVHN', split='train', transform=data_tf_3_64_64,
                                           download=True)
             test_dataset = datasets.SVHN(root='./DataSet/SVHN', split='test', transform=tensor_transform,
                                          download=True)
         elif Data_Set == 'TinyImageNet':
-            train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_tiny_imagenet)
+            train_dataset = TrainTinyImageNetDataset(id=get_id_dict(), transform=data_tf_3_64_64)
             test_dataset = TestTinyImageNetDataset(id=get_id_dict(), transform=tensor_transform)
         elif Data_Set == 'MNIST':
             train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=tensor_transform,
@@ -241,16 +253,15 @@ class Trainer():
         test_clean_acc, test_adv_acc = [], []
         test_clean_loss, test_adv_loss = [], []
 
+        optimizer = optim.SGD(Model.parameters(),
+                              lr=self.Learning_Rate,
+                              momentum=0.9,
+                              )
         if Enable_Adv_Training:
             optimizer = optim.SGD(Model.parameters(),
                                   lr=self.Learning_Rate,
                                   momentum=0.9,
-                                  weight_decay=2e-4
-                                  )
-        else:
-            optimizer = optim.SGD(Model.parameters(),
-                                  lr=self.Learning_Rate,
-                                  momentum=0.9,
+                                  # weight_decay=2e-4
                                   )
             # optimizer = optim.Adam(Model.parameters(),
             #                        lr=self.Learning_Rate)
@@ -513,7 +524,7 @@ if __name__ == '__main__':
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
     from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
-    from Models.Tiny_ImageNet import WideResNet_3_64_64
+    from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
@@ -528,19 +539,25 @@ if __name__ == '__main__':
     Model_dict['WideResNet_SVHN'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
     Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1,
                                                                 dropRate=0.0)
+    Model_dict['WideResNet_STL10'] = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1,
+                                                        dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_SVHN', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
     parser.add_argument('--Label_Num', default=10, type=int, help='The Label_Num.')
+
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=250, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=4, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
-    parser.add_argument('--Data_Set', default='SVHN', type=str, help='The Data_Set.')
-    parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
+
+    parser.add_argument('--Eps', default=4 / 255, type=float, help='perturbation magnitude')
+    parser.add_argument('--Alpha', default=2 / 255, type=float, help='the perturbation in each step')
+    parser.add_argument('--Step', default=7, type=int, help='the step')
 
     args = parser.parse_args()
 
@@ -548,8 +565,8 @@ if __name__ == '__main__':
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
     Trainer_0 = Trainer(Model, args)
-    Trainer_0.training(Enable_Adv_Training=False)
-    Trainer_0.training(Enable_Adv_Training=True)
+    # Trainer_0.training(Enable_Adv_Training=False)
+    # Trainer_0.training(Enable_Adv_Training=True)
     # Trainer_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
     # load_model(Model, './Checkpoint/%s_std.pth' % Model_Name)

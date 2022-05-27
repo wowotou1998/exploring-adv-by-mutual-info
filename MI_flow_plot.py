@@ -431,7 +431,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='plot arguments')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_SVHN', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
     # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)

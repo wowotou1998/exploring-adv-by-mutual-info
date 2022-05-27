@@ -145,6 +145,68 @@ class WideResNet_3_64_64(nn.Module):
         return self.fc(out)
 
 
+class WideResNet_3_96_96(nn.Module):
+    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0):
+        super(WideResNet_3_96_96, self).__init__()
+        nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
+        assert ((depth - 4) % 6 == 0)
+        layer_repeat = (depth - 4) / 6
+        block = BasicBlock
+        # 1st conv before any network block
+        self.conv1 = nn.Conv2d(3, nChannels[0],
+                               kernel_size=3, stride=1, padding=1,
+                               bias=False)
+        # 1st block
+        self.block1 = NetworkBlock(layer_repeat, nChannels[0], nChannels[1], block, 1, dropRate)
+        # 2nd block
+        self.block2 = NetworkBlock(layer_repeat, nChannels[1], nChannels[2], block, 2, dropRate)
+        # 3rd block
+        self.block3 = NetworkBlock(layer_repeat, nChannels[2], nChannels[3], block, 2, dropRate)
+        # global average pooling and classifier
+        self.bn1 = nn.BatchNorm2d(nChannels[3])
+        self.relu = nn.LeakyReLU(0.1, inplace=True)
+        # self.fc = nn.Linear(nChannels[3], num_classes)
+        self.fc = nn.Linear(576, num_classes)
+        self.nChannels = nChannels[3]
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.bias.data.zero_()
+
+        self.modules_to_hook = ('conv1',
+                                'block1.layer.0.relu1',
+                                'block2.layer.0.relu1',
+                                'block3.layer.0.relu1',
+                                'fc')
+        # self.modules_to_hook = (torch.nn.LeakyReLU,)
+
+    def forward(self, x, _eval=False):
+        if _eval:
+            # switch to eval mode
+            self.eval()
+        else:
+            self.train()
+
+        out = self.conv1(x)
+        out = self.block1(out)
+        out = self.block2(out)
+        out = self.block3(out)
+        out = self.relu(self.bn1(out))
+        out = F.avg_pool2d(out, 8)
+        out = out.view(out.size(0), -1)
+        # print('out.shape', out.shape)
+
+        self.train()
+
+        return self.fc(out)
+
+
 if __name__ == '__main__':
-    a = WideResNet(depth=1 * 6 + 4, num_classes=200, widen_factor=1, dropRate=0.0)
+    a = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1, dropRate=0.0)
     b = a(torch.rand((1, 3, 64, 64)))
