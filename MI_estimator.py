@@ -113,7 +113,7 @@ class mutual_info_estimator(object):
                     # print('layer name: ', layer_name)
                     handle = layer.register_forward_hook(
                         lambda layer, input, output:
-                        self.layer_activations.append(output.clone().detach().view(output.size(0), -1)))
+                        self.layer_activations.append(output.clone().detach().cpu().view(output.size(0), -1)))
                     self.handle_list.append(handle)
 
         else:
@@ -123,7 +123,7 @@ class mutual_info_estimator(object):
                     # print('layer name: ', layer_name)
                     handle = layer.register_forward_hook(
                         lambda layer, input, output:
-                        self.layer_activations.append(output.clone().detach().view(output.size(0), -1)))
+                        self.layer_activations.append(output.clone().detach().cpu().view(output.size(0), -1)))
                     self.handle_list.append(handle)
 
         """

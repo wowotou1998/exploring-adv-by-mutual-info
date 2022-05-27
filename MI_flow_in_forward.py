@@ -26,9 +26,10 @@ import torch.nn.functional as F
 
 
 class Forward():
-    def __init__(self, Origin_Model, Model_Name, Data_Set, args):
+    def __init__(self, Origin_Model, args):
         self.Origin_Model = Origin_Model
-        self.Model_Name = Model_Name
+        self.Model_Name = args.Model_Name
+        self.Data_Set = args.Data_Set
         # self.Enable_Show = True
         self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
@@ -114,9 +115,9 @@ class Forward():
         elif Transform_Type == 'Patch':
             Extra_Transform = Patch_Transform(k=Level)
         else:
-            Extra_Transform = transforms.ToTensor()
+            raise RuntimeError('Unknown Transformation')
 
-        data_tf_cifar10_test = transforms.Compose([
+        data_tf_test = transforms.Compose([
             transforms.ToTensor(),
             # Saturation_Transform(saturation_level=1024.),
             # Patch_Transform(k=4),
@@ -127,13 +128,21 @@ class Forward():
             transforms.ToTensor(),
         ])
 
+        Data_Set = self.Data_Set
+
         if Data_Set == 'CIFAR10':
             # train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
             #                                  download=True)
-            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_cifar10_test)
-        else:
+            test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_test)
+        if Data_Set == 'STL10':
+            # train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
+            #                                  download=True)
+            test_dataset = datasets.STL10(root='./DataSet/STL10', split='test', transform=data_tf_test)
+        elif Data_Set == 'MNIST':
             # train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
+        else:
+            raise RuntimeError('Unknown Dataset')
 
         # Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)
@@ -266,7 +275,7 @@ class Forward():
         # 计算存储互信息
         # calculate mutual info
         estimator.layer_activations = layer_activation_chunk
-        estimator.caculate_MI(image_chunk, label_chunk)
+        estimator.caculate_MI(image_chunk.cpu(), label_chunk.cpu())
         estimator.store_MI()
 
         acc = correct_N * 100. / total_N
@@ -648,6 +657,7 @@ if __name__ == '__main__':
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
     from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
+    from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
@@ -659,17 +669,20 @@ if __name__ == '__main__':
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
     Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    Model_dict['WideResNet_STL10'] = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1,
+                                                        dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+
     parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=10, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Repeat', default=4, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
-    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
     parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
 
     args = parser.parse_args()
@@ -677,20 +690,20 @@ if __name__ == '__main__':
     Data_Set = args.Data_Set
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
-    Forward_0 = Forward(Model, Model_Name, Data_Set, args)
+    Forward_0 = Forward(Model, args)
     # Forward_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
-    # Forward_0.forward(Model, Enable_Adv_Training=False)
-    # Forward_0.forward(Model, Enable_Adv_Training=True)
+    Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=False)
+    Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=True)
 
     Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
     Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
 
-    # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
-    # Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
+    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
+    Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
 
-    # Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
-    # Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
+    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=False)
+    Forward_0.plot_data(Transform_Type='Patch', Enable_Adv_Training=True)
 
     # pass
 
