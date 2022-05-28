@@ -40,7 +40,7 @@ class Forward():
         self.std_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.adv_estimator = mutual_info_estimator(self.Origin_Model.modules_to_hook, By_Layer_Name=False)
         self.Patch_Split_L = [2, 4, 8]
-        self.Saturation_L = [2, 8, 16, 64, 1024]
+        self.Saturation_L = [64, 128, 512, 1024]
         self.Loss_Acc = None
 
     def get_test_loader(self, Data_Set, Transform_Type, Level):
@@ -319,10 +319,10 @@ class Forward():
             test_adv_loss_L.append(level_i_test_adv_loss)
 
             # print some data
-            print('Saturation level_i[%d] '
+            print('%s level_i[%d] '
                   'test_clean_loss[%.2f], test_adv_loss[%.2f] '
                   'test_clean_acc[%.2f%%],test_adv_acc[%.2f%%]'
-                  % (level,
+                  % (Transform_Type, level,
                      level_i_test_clean_loss, level_i_test_adv_loss,
                      level_i_test_clean_acc, level_i_test_adv_acc))
 
@@ -679,8 +679,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=4, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=6, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
@@ -693,11 +693,11 @@ if __name__ == '__main__':
     Forward_0 = Forward(Model, args)
     # Forward_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 
-    Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=False)
-    Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=True)
-
-    Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
-    Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
+    # Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=False)
+    # Forward_0.forward(Model, Transform_Type='Saturation', Enable_Adv_Training=True)
+    #
+    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=False)
+    # Forward_0.plot_data(Transform_Type='Saturation', Enable_Adv_Training=True)
 
     Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=False)
     Forward_0.forward(Model, Transform_Type='Patch', Enable_Adv_Training=True)
