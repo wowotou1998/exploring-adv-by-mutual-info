@@ -119,16 +119,17 @@ class Trainer():
 
     def save_mutual_info_data(self, std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-        Model_Name, Forward_Size, Forward_Repeat = self.Model_Name, self.Forward_Size, self.Forward_Repeat
+
         dir = 'Checkpoint/%s' % Model_Name
         # 对于每一个模型产生的数据, 使用一个文件夹单独存放
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        basic_info = {'Model': Model_Name,
+        basic_info = {'Model': self.Model_Name,
+                      'Learning_Rate': self.Learning_Rate,
                       'Enable_Adv_Training': Enable_Adv_Training,
-                      'Forward_Size': Forward_Size,
-                      'Forward_Repeat': Forward_Repeat,
+                      'Forward_Size': self.Forward_Size,
+                      'Forward_Repeat': self.Forward_Repeat,
                       }
 
         std, adv = std_estimator, adv_estimator
@@ -236,6 +237,7 @@ class Trainer():
         estimator.layer_activations = layer_activation_chunk
         estimator.caculate_MI(image_chunk.cpu(), label_chunk.cpu())
         estimator.store_MI()
+        # estimator.clear_activations()
 
         acc = correct_N * 100. / total_N
         return acc, loss / self.Forward_Repeat
@@ -361,6 +363,11 @@ class Trainer():
             'test_adv_acc': test_adv_acc
         }
         # plot_performance(analytic_data, Enable_Adv_Training)
+        '''
+        在保存数据之前，一定要清除layer_activations, layer_activations数据量真的太大了
+        '''
+        self.std_estimator.clear_activations()
+        self.adv_estimator.clear_activations()
         self.save_mutual_info_data(self.std_estimator, self.adv_estimator, analytic_data, Enable_Adv_Training)
         # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_upper, std_estimator.epoch_MI_hM_Y_upper, title='std_upper')
         # plot_mutual_info_2(std_estimator.epoch_MI_hM_X_bin, std_estimator.epoch_MI_hM_Y_bin, title='std_bin')

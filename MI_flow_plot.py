@@ -9,30 +9,23 @@ import math
 import torch
 import torch.nn.functional as F
 
-# mpl.rcParams['font.sans-serif'] = ['Times New Roman']
-# mpl.rcParams['font.sans-serif'] = ['Arial']
-mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
-mpl.rcParams['figure.constrained_layout.use'] = True
-plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
-plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
-Forward_Repeat, Forward_Size = 1, 2
-line_styles = ['-', ':']
-labels = ['std', 'adv']  # legend标签列表，上面的color即是颜色列表
-
-# 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
-# patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
-
-# color = 'purple' or 'orange'
-line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
-                Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+# Forward_Repeat, Forward_Size = 1, 2
+# line_styles = ['-', ':']
+# labels = ['std', 'adv']  # legend标签列表，上面的color即是颜色列表
 
 
 # fig, ax = plt.subplots()
 # lines = ax.plot(data)
 # ax.legend(custom_lines, ['Cold', 'Medium', 'Hot'])
 def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
+    # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
+    # patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
+
+    # color = 'purple' or 'orange'
+    line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
+                    Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         basic_info = pickle.load(f)
@@ -44,7 +37,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         adv = pickle.load(f)
 
     Forward_Size, Forward_Repeat = basic_info['Forward_Size'], basic_info['Forward_Repeat']
-    Model_Name = basic_info['Model']
+    # Model_Name = basic_info['Model']
     Activation_F = 'relu'
     Learning_Rate = 0.08
 
@@ -231,7 +224,14 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
     print("Work has done!")
 
+
 def plot_mutual_info(Model_Name, Enable_Adv_Training):
+    # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
+    # patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
+
+    # color = 'purple' or 'orange'
+    line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
+                    Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         basic_info = pickle.load(f)
@@ -241,6 +241,15 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
         std = pickle.load(f)
     with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
         adv = pickle.load(f)
+    '''
+    过渡方案， 读取之后消除layer_activations再保存回去
+    '''
+    with open('./Checkpoint/%s/loss_and_mutual_info_%s_std.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+        std.clear_activations()
+        pickle.dump(std, f)
+    with open('./Checkpoint/%s/loss_and_mutual_info_%s_adv.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+        adv.clear_activations()
+        pickle.dump(adv, f)
 
     Forward_Size, Forward_Repeat = basic_info['Forward_Size'], basic_info['Forward_Repeat']
     # Model_Name = basic_info['Model']
@@ -624,13 +633,27 @@ def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
 
 
 if __name__ == '__main__':
+    import matplotlib
+
+    # matplotlib.use('agg')
+    # matplotlib.get_backend()
+
+    # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
+    # mpl.rcParams['font.sans-serif'] = ['Arial']
+    mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+    # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+    mpl.rcParams['figure.constrained_layout.use'] = True
+    mpl.rcParams['backend'] = 'agg'
+    plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
+    plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
+
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
     # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
-    # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
     # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)

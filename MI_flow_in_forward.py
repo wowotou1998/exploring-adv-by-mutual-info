@@ -334,6 +334,12 @@ class Forward():
         }
         # plot_performance(analytic_data, Enable_Adv_Training)
         self.Loss_Acc = loss_acc
+        '''
+        在保存数据之前，一定要清除layer_activations, layer_activations数据量真的太大了
+        '''
+        self.std_estimator.clear_activations()
+        self.adv_estimator.clear_activations()
+
         self.save_mutual_info_data(Transform_Type, Enable_Adv_Training)
         """
         在退出训练之前完成清理工作
