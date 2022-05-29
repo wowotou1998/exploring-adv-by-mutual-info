@@ -548,7 +548,7 @@ if __name__ == '__main__':
     parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
     parser.add_argument('--Label_Num', default=10, type=int, help='The Label_Num.')
 
-    parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
+    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=6, type=bool, help='Forward_Repeat')
