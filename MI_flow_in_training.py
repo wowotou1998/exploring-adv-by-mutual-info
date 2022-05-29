@@ -234,7 +234,7 @@ class Trainer():
         # 计算存储互信息
         # calculate mutual info
         estimator.layer_activations = layer_activation_chunk
-        estimator.caculate_MI(image_chunk, label_chunk)
+        estimator.caculate_MI(image_chunk.cpu(), label_chunk.cpu())
         estimator.store_MI()
 
         acc = correct_N * 100. / total_N
@@ -535,10 +535,10 @@ if __name__ == '__main__':
     Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
-    Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
-    Model_dict['WideResNet_SVHN'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
-    Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1,
-                                                                dropRate=0.0)
+    Model_dict['WideResNet_CIFAR10'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    # Model_dict['WideResNet_SVHN'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    # Model_dict['WideResNet_Tiny_ImageNet'] = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1,
+    #                                                             dropRate=0.0)
     Model_dict['WideResNet_STL10'] = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1,
                                                         dropRate=0.0)
 
@@ -550,8 +550,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=250, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=4, type=bool, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=6, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
 
@@ -561,7 +561,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    Data_Set = args.Data_Set
     Model_Name = args.Model_Name
     Model = Model_dict[Model_Name]
     Trainer_0 = Trainer(Model, args)

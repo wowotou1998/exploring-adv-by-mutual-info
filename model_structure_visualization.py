@@ -14,8 +14,8 @@ import argparse
 # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'
 # Model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 # Model, Model_Name = vgg11(pretrained=False)
-# Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet'
-# Model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+# Model, Model_Name = WideResNet_CIFAR10(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0), 'WideResNet_CIFAR10'
+# Model, Model_Name = WideResNet_CIFAR10(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet_CIFAR10'
 # Model.eval()
 # summary(Model, (3, 32, 32), device="cpu")
 

@@ -31,9 +31,9 @@ class Forward():
         self.Model_Name = args.Model_Name
         self.Data_Set = args.Data_Set
         # self.Enable_Show = True
-        self.Std_Epoch_Num = args.Std_Epoch_Num
+        # self.Std_Epoch_Num = args.Std_Epoch_Num
         self.Forward_Size, self.Forward_Repeat = args.Forward_Size, args.Forward_Repeat
-        self.Train_Batch_Size = args.batch_size
+        # self.Train_Batch_Size = args.batch_size
         self.Device = torch.device("cuda:%d" % (args.GPU) if torch.cuda.is_available() else "cpu")
         # 在 forward之前设定一下测试集的装载
         self.Test_Loader = None  # self.get_test_loader(Data_Set)
@@ -623,7 +623,7 @@ class Forward():
                 label_adv_chunk = torch.cat((label_adv_chunk, label_adv.clone().detach()), dim=0)
                 label_prob_adv_chunk = torch.cat((label_prob_adv_chunk, label_prob_adv.clone().detach()), dim=0)
 
-        dir = 'Checkpoint/%s' % Model_Name
+        dir = 'Checkpoint/%s' % self.Model_Name
         # 对于每一个模型产生的数据, 使用一个文件夹单独存放
         if not os.path.exists(dir):
             os.makedirs(dir)
@@ -635,7 +635,7 @@ class Forward():
                            'label_prob_adv_chunk': label_prob_adv_chunk,
                            }
 
-        with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+        with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (self.Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(transfer_matrix, f)
         print('Calculating Transfer Matrix was Done')
 
@@ -668,7 +668,7 @@ if __name__ == '__main__':
     Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
     Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
     Model_dict['vgg11'] = vgg11(pretrained=False)
-    Model_dict['WideResNet'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    Model_dict['WideResNet_CIFAR10'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
     Model_dict['WideResNet_STL10'] = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1,
                                                         dropRate=0.0)
 
@@ -677,19 +677,17 @@ if __name__ == '__main__':
     parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
     parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
 
-    parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
-    parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
+    # parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
+    # parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=6, type=bool, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
-    parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
+    # parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
     parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
 
     args = parser.parse_args()
 
-    Data_Set = args.Data_Set
-    Model_Name = args.Model_Name
-    Model = Model_dict[Model_Name]
+    Model = Model_dict[args.Model_Name]
     Forward_0 = Forward(Model, args)
     # Forward_0.calculate_transfer_matrix(Model, Enable_Adv_Training=False)
 

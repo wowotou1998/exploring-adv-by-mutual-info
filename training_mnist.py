@@ -172,7 +172,7 @@ from Models.VGG_s import *
 
 # model, Model_Name = ModelSet.LeNet_cifar10(), 'LeNet_cifar10'
 # model, Model_Name = VGG_s('VGG11'), 'VGG11'
-# model, Model_Name = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet'
+# model, Model_Name = WideResNet_CIFAR10(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet_CIFAR10'
 model, Model_Name = FC_2(Activation_F=torch.nn.ReLU()), 'FC_2'
 # model, Model_Name = resnet34(pretrained=False, num_classes=10), 'resnet34'
 print("Model Structure\n", model)
@@ -195,7 +195,7 @@ modules_to_hook = (torch.nn.Sigmoid)
 #                    'layer3.5.conv2',
 #                    'layer4.2.conv2',
 #                    'fc')
-# WideResNet
+# WideResNet_CIFAR10
 # modules_to_hook = ('conv1',
 #                    'block1.layer.0.relu2',
 #                    'block2.layer.0.relu2',

@@ -287,7 +287,7 @@ Enable_Attack = False
 #                    'layer3.1.conv2',
 #                    'layer4.1.conv2',
 #                    'fc')
-# WideResNet
+# WideResNet_CIFAR10
 modules_to_hook = ('conv1',
                    'block1.layer.0.relu2',
                    'block2.layer.0.relu2',
