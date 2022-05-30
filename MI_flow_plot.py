@@ -5,9 +5,11 @@ import datetime
 from utils import *
 import pickle
 from matplotlib.lines import Line2D
+from matplotlib.markers import MarkerStyle
 import math
 import torch
 import torch.nn.functional as F
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 
 # Forward_Repeat, Forward_Size = 1, 2
@@ -19,12 +21,16 @@ import torch.nn.functional as F
 # lines = ax.plot(data)
 # ax.legend(custom_lines, ['Cold', 'Medium', 'Hot'])
 def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
-    # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend
-    # patches = [mpatches.Patch(linestyle=line_styles[i], label="{:s}".format(labels[i])) for i in range(len(line_styles))]
+    # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend patches = [mpatches.Patch(linestyle=line_styles[i],
+    # label="{:s}".format(labels[i])) for i in range(len(line_styles))]
 
     # color = 'purple' or 'orange'
-    line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
-                    Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+    # line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
+    #                 Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+
+    # linestyle='None' 设置为 None 就可以进行相应的 Marker
+    marker_legends = [Line2D([0], [0], color='Green', linestyle='None', marker='o', markersize=10),
+                      Line2D([0], [0], color='Red', linestyle='None', marker='+', markersize=10)]
 
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
@@ -46,18 +52,54 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
     Layer_Name = [str(i) for i in range(Layer_Num)]
 
-    sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
-    sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    # Green = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    Greens = plt.get_cmap('Greens')
+    Reds = plt.get_cmap('Reds')
+    # Red = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    # sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
-    title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s" % (
-        Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
-    )
+    label_formatter_float = FormatStrFormatter('%.1f')  # 设置x轴标签文本的格式
+    label_formatter_int = FormatStrFormatter('%d')  # 设置y轴标签文本的格式
 
-    def axs_plot(axs, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type):
+    # subplot2grid, size = （行,列）, 块起始点坐标
+    # grid_size = (4, Layer_Num)
+    Fig_Size = (25.6, 14.4)
+    fig = plt.figure(figsize=Fig_Size, constrained_layout=True)
+    spec = fig.add_gridspec(4, Layer_Num)
+
+    # -------------------------------------------Loss and Accuracy Detail---------------------
+    ax00 = fig.add_subplot(spec[0, 0])
+    ax00.set_xlabel('Epochs')
+    ax00.set_ylabel('Loss')
+    ax00.plot(Epochs, analytic_data['train_loss'], label='Train set')
+    ax00.plot(Epochs, analytic_data['test_clean_loss'], label='Clean test')
+    ax00.plot(Epochs, analytic_data['test_adv_loss'], label='Adv test')
+    ax00.legend()
+    # -------------------
+    ax01 = fig.add_subplot(spec[0, 1])
+    ax01.set_xlabel('Epochs')
+    ax01.set_ylabel('Accuracy (%)')
+    ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
+    ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
+    ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
+    ax01.legend()
+
+    # -------------------------------------------overlook by Upper mutual info---------------------
+    ax01 = fig.add_subplot(spec[0, 1])
+    ax01.set_xlabel('Epochs')
+    ax01.set_ylabel('Accuracy (%)')
+    ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
+    ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
+    ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
+    ax01.legend()
+
+    # -------------------------------------------mutual information spilt by Layer---------------------
+    def axs_plot(fig, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type, Row_i):
         std_I_TX = np.array(std_I_TX)
         std_I_TY = np.array(std_I_TY)
         adv_I_TX = np.array(adv_I_TX)
         adv_I_TY = np.array(adv_I_TY)
+        # 坐标轴文本设置
 
         # 设定坐标范围
         i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
@@ -66,114 +108,83 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
         i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.5
 
-        for epoch_i in range(Std_Epoch_Num):
-            c = sm.to_rgba(epoch_i + 1)
-            # layers = [i for i in range(1,len(I_TX)+1)]
-            std_I_TX_epoch_i, std_I_TY_epoch_i = std_I_TX[epoch_i], std_I_TY[epoch_i]
-            adv_I_TX_epoch_i, adv_I_TY_epoch_i = adv_I_TX[epoch_i], adv_I_TY[epoch_i]
+        for layer_i in range(Layer_Num):
+            ax = fig.add_subplot(spec[Row_i, layer_i])
 
-            axs[0].set_title(MI_Type)
+            # 最左侧的plot设置 y_label
+            # 最下面的plot设置 x_label
+            if layer_i == 0:
+                ax.set_ylabel(MI_Type + '\n\n' + r'$I(T;Y)$' + ' (bits)')
+            if Row_i == 3:
+                ax.set_xlabel(r'$I(T;X)$' + ' (bits)')
+            #  设置图例
+            if layer_i == 0 and Row_i == 1:
+                ax.legend(marker_legends, ['std', 'adv'])
+            #  设置标题
+            if Row_i == 1:
+                ax.set_title('Layer index %d' % (layer_i + 1))
 
-            axs[0].legend(line_legends, ['std', 'adv'])
-            axs[1].legend(line_legends, ['std', 'adv'])
+            c = np.array(Epochs)
+            c_bar_std = ax.scatter(std_I_TX[..., layer_i], std_I_TY[..., layer_i],
+                                   c=c,
+                                   cmap=Greens,
+                                   marker='o',
+                                   # facecolors='none',
+                                   # edgecolors=c,
 
-            axs[0].plot(Layer_Name, std_I_TX_epoch_i,
-                        color=c, marker='o',
-                        linestyle='-', linewidth=1,
-                        )
-            axs[1].plot(Layer_Name, adv_I_TX_epoch_i,
-                        color=c, marker='^',
-                        linestyle='--', linewidth=1,
-                        )
+                                   # linestyle='-', linewidth=0.1,
+                                   # zorder=2
+                                   )
+            c_bar_adv = ax.scatter(adv_I_TX[..., layer_i], adv_I_TY[..., layer_i],
+                                   c=c,
+                                   cmap=Reds,
+                                   marker='+',
+                                   # linestyle='+', linewidth=0.1,
+                                   # zorder=2
+                                   )
+            # 设定 x,y label 的数据格式
+            ax.xaxis.set_major_formatter(label_formatter_float)
+            ax.yaxis.set_major_formatter(label_formatter_float)
 
-            axs[0].set_ylim((i_tx_min, i_tx_max))
-            axs[1].set_ylim((i_tx_min, i_tx_max))
+            # ax.set_ylim((i_tx_min, i_tx_max))
+            # ax.set_ylim((i_tx_min, i_tx_max))
+            #
+            # ax.set_ylim((i_ty_min, i_ty_max))
+            # ax.set_ylim((i_ty_min, i_ty_max))
 
-            axs[2].plot(Layer_Name, std_I_TY_epoch_i,
-                        color=c, marker='o',
-                        linestyle='-', linewidth=1,
-                        )
-            axs[3].plot(Layer_Name, adv_I_TY_epoch_i,
-                        color=c, marker='^',
-                        linestyle='--', linewidth=1,
-                        )
-
-            axs[2].set_ylim((i_ty_min, i_ty_max))
-            axs[3].set_ylim((i_ty_min, i_ty_max))
-
-    # fig size, 先列后行
-    nrows = 4
-    ncols = 4
-    fig, axs = plt.subplots(nrows, ncols, figsize=(15, 15), )
-
-    # 初始化 xlabel, y_label
-    for i in range(nrows - 1):
-        for j in range(ncols):
-            axs[i][j].grid(True)
-            if j < 2:
-                axs[i][j].set_xlabel('layers')
-                axs[i][j].set_ylabel(r'$I(T;X)$')
-
-            else:
-                axs[i][j].set_xlabel('layers')
-                axs[i][j].set_ylabel(r'$I(T;Y)$')
-
-    # range(开始，结束，步长)
-    # 绘制每一轮次的信息曲线
+            # 设置 color_bar
+            if layer_i == (Layer_Num - 1) and Row_i == 1:
+                fig.colorbar(c_bar_std, ax=ax)
+            if layer_i == (Layer_Num - 1) and Row_i == 3:
+                fig.colorbar(c_bar_adv, ax=ax)
 
     # std/adv Upper
-    axs_plot(axs[0],
+    axs_plot(fig,
              std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
              adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
-             Std_Epoch_Num, MI_Type='upper'
+             Std_Epoch_Num, MI_Type='Upper', Row_i=1
              )
     # std/adv Lower
-    axs_plot(axs[1],
+    axs_plot(fig,
              std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
              adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
-             Std_Epoch_Num, MI_Type='lower'
+             Std_Epoch_Num, MI_Type='Lower', Row_i=2
              )
     # std/adv Bin
-    axs_plot(axs[2],
+    axs_plot(fig,
              std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
              adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
-             Std_Epoch_Num, MI_Type='bin'
+             Std_Epoch_Num, MI_Type='Bin', Row_i=3
              )
-
-    # plt.scatter(I_TX, I_TY,
-    #             color=c,
-    #             linestyle='-', linewidth=0.1,
-    #             zorder=2
-    #             )
-
-    # -------------------------------------------Loss and Accuracy Detail---------------------
-    # for idx, (k, v) in enumerate(analytic_data.items()):
-    axs[nrows - 1][0].set_xlabel('epochs')
-    axs[nrows - 1][0].set_title('loss')
-    axs[nrows - 1][0].plot(Epochs, analytic_data['train_loss'], label='train_loss')
-    axs[nrows - 1][0].plot(Epochs, analytic_data['test_clean_loss'], label='test_clean_loss')
-    axs[nrows - 1][0].plot(Epochs, analytic_data['test_adv_loss'], label='test_adv_loss')
-    axs[nrows - 1][0].legend()
-    # -------------------
-    axs[nrows - 1][1].set_xlabel('epochs')
-    axs[nrows - 1][1].set_title('acc')
-    axs[nrows - 1][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
-    axs[nrows - 1][1].plot(Epochs, analytic_data['test_clean_acc'], label='test_clean_acc')
-    axs[nrows - 1][1].plot(Epochs, analytic_data['test_adv_acc'], label='test_adv_acc')
-    axs[nrows - 1][1].legend()
-
-    # plt.scatter(epoch_MI_hM_X_upper[0], epoch_MI_hM_Y_upper[0])
-    # plt.legend()
-
+    title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s" % (
+        Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
+    )
     fig.suptitle(title)
-    fig.colorbar(sm, ax=axs, label='Epoch')
-
-    # fig = plt.gcf()
-    # if Enable_Show:
     plt.show()
-    fig.savefig('mutual_info_%s_%s_%s.pdf' % (
-        Model_Name, Is_Adv_Training,
-        datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+
+    # fig.savefig('mutual_info_%s_%s_%s.pdf' % (
+    #     Model_Name, Is_Adv_Training,
+    #     datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
 
     # -------------------------------------------Mutual Information Detail---------------------
     # 设定坐标范围
@@ -182,7 +193,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     #
     # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
     # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
-    fig, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7))
+    fig2, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7), constrained_layout=True)
     std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
     adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
     # C0-C9 是 matplotlib 里经常使用的色条
@@ -190,15 +201,17 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
              'C6', 'C7', 'C8', 'C9', 'olive', 'peach', ]
 
     for layer_i in range(Layer_Num):
-        axs[0][layer_i].set_xlabel('epochs')
-        axs[0][layer_i].set_title('Std Layer %d' % layer_i)
+        # 设定 y 标签的格式
+        axs[0][layer_i].yaxis.set_major_formatter(label_formatter_int)
+        axs[1][layer_i].yaxis.set_major_formatter(label_formatter_int)
+
+        axs[0][layer_i].set_title('Layer Index %d' % layer_i)
         # epoch_i, layer_i, label_i
         axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
                              color=COLOR[0],
                              label=r'$H_{Lower}(T_i)$')
 
-        axs[1][layer_i].set_xlabel('epochs')
-        axs[1][layer_i].set_title('Adv Layer %d' % layer_i)
+        axs[1][layer_i].set_xlabel('Epochs')
         axs[1][layer_i].plot(Epochs, adv_lower_detail[..., layer_i, -1],
                              color=COLOR[0],
                              label=r'$H_{Lower}(T_i)$')
@@ -213,15 +226,18 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
             axs[1][layer_i].plot(Epochs, adv_temp_data,
                                  color=COLOR[label_i + 1],
                                  label=r'$H(T_i|y_%d)$' % (label_i))
-        if layer_i == 0:
-            axs[0][0].legend(ncol=2)
+    # 只有第一个子图显示 legend 信息
+    axs[0][0].legend(ncol=2, prop={'size': 13})
+    # 只有最左侧的子图显示 y label 信息
+    axs[0][0].set_ylabel('Std')
+    axs[1][0].set_ylabel('Adv')
 
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
-    fig.suptitle(title)
+    fig2.suptitle(title)
     plt.show()
-    fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+    # fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
     print("Work has done!")
 
 
@@ -639,11 +655,12 @@ if __name__ == '__main__':
     # matplotlib.get_backend()
 
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
-    # mpl.rcParams['font.sans-serif'] = ['Arial']
+    mpl.rcParams['font.sans-serif'] = ['Arial']
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
     mpl.rcParams['figure.constrained_layout.use'] = True
     mpl.rcParams['backend'] = 'agg'
+    mpl.rcParams["font.size"] = 18
     plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
     plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
@@ -657,8 +674,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Model_Name = args.Model_Name
     # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
-    plot_mutual_info(Model_Name, Enable_Adv_Training=False)
-    plot_mutual_info(Model_Name, Enable_Adv_Training=True)
+    # plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=False)
+    plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=True)
+    # plot_mutual_info(Model_Name, Enable_Adv_Training=True)
 
     # vegetables = ["cucumber", "tomato", "lettuce", "asparagus",
     #               "potato", "wheat", "barley"]
