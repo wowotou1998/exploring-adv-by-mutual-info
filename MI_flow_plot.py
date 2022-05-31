@@ -171,11 +171,11 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
             # ax.xaxis.set_major_formatter(label_formatter_float)
             # ax.yaxis.set_major_formatter(label_formatter_float)
 
-            ax.set_ylim((i_tx_min, i_tx_max))
-            ax.set_ylim((i_tx_min, i_tx_max))
-
-            ax.set_ylim((i_ty_min, i_ty_max))
-            ax.set_ylim((i_ty_min, i_ty_max))
+            # ax.set_ylim((i_tx_min, i_tx_max))
+            # ax.set_ylim((i_tx_min, i_tx_max))
+            #
+            # ax.set_ylim((i_ty_min, i_ty_max))
+            # ax.set_ylim((i_ty_min, i_ty_max))
 
             # 设置 color_bar
             if layer_i == (Layer_Num - 1) and Row_i == 1:
@@ -692,9 +692,9 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    # parser.add_argument('--Model_Name', default='LeNet_3_32_32', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name

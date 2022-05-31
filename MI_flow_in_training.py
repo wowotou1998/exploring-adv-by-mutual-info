@@ -119,7 +119,7 @@ class Trainer():
 
     def save_mutual_info_data(self, std_estimator, adv_estimator, analytic_data, Enable_Adv_Training):
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
-
+        Model_Name = self.Model_Name
         dir = 'Checkpoint/%s' % Model_Name
         # 对于每一个模型产生的数据, 使用一个文件夹单独存放
         if not os.path.exists(dir):
@@ -497,7 +497,7 @@ class Trainer():
                 label_adv_chunk = torch.cat((label_adv_chunk, label_adv.clone().detach()), dim=0)
                 label_prob_adv_chunk = torch.cat((label_prob_adv_chunk, label_prob_adv.clone().detach()), dim=0)
 
-        dir = 'Checkpoint/%s' % Model_Name
+        dir = 'Checkpoint/%s' % self.Model_Name
         # 对于每一个模型产生的数据, 使用一个文件夹单独存放
         if not os.path.exists(dir):
             os.makedirs(dir)
@@ -509,7 +509,7 @@ class Trainer():
                            'label_prob_adv_chunk': label_prob_adv_chunk,
                            }
 
-        with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (Model_Name, Is_Adv_Training), 'wb') as f:
+        with open('./Checkpoint/%s/transfer_matrix_%s.pkl' % (self.Model_Name, Is_Adv_Training), 'wb') as f:
             pickle.dump(transfer_matrix, f)
         print('Calculating Transfer Matrix was Done')
 
@@ -551,25 +551,27 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
     # parser.add_argument('--Model_Name', default='LeNet_3_32_32', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
-    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
+    # parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+
+    parser.add_argument('--Eps', default=4 / 255, type=float, help='perturbation magnitude')
+    parser.add_argument('--Alpha', default=1 / 255, type=float, help='the perturbation in each step')
+    parser.add_argument('--Step', default=7, type=int, help='the step')
+
+    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
+
     parser.add_argument('--Label_Num', default=10, type=int, help='The Label_Num.')
 
-    parser.add_argument('--Std_Epoch_Num', default=100, type=int, help='The epochs.')
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=6, type=int, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
 
-    parser.add_argument('--Eps', default=8 / 255, type=float, help='perturbation magnitude')
-    parser.add_argument('--Alpha', default=2 / 255, type=float, help='the perturbation in each step')
-    parser.add_argument('--Step', default=7, type=int, help='the step')
-
     args = parser.parse_args()
 
-    Model_Name = args.Model_Name
-    Model = Model_dict[Model_Name]
+    Model = Model_dict[args.Model_Name]
     Trainer_0 = Trainer(Model, args)
     Trainer_0.training(Enable_Adv_Training=True)
     Trainer_0.training(Enable_Adv_Training=False)
