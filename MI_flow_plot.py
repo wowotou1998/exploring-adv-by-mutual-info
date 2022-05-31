@@ -25,12 +25,14 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     # label="{:s}".format(labels[i])) for i in range(len(line_styles))]
 
     # color = 'purple' or 'orange'
-    # line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
-    #                 Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+    line_legends = [
+        Line2D([0], [0], color='C0', linewidth=1, linestyle='-', marker='o', markerfacecolor='none', markersize=10),
+        Line2D([0], [0], color='Red', linewidth=1, linestyle='-', marker='+', markersize=10)]
 
     # linestyle='None' 设置为 None 就可以进行相应的 Marker
-    marker_legends = [Line2D([0], [0], color='Green', linestyle='None', marker='o', markersize=10),
-                      Line2D([0], [0], color='Red', linestyle='None', marker='+', markersize=10)]
+    marker_legends = [
+        Line2D([0], [0], color='C0', linestyle='None', marker='o', markerfacecolor='none', markersize=10),
+        Line2D([0], [0], color='Red', linestyle='None', marker='+', markersize=10)]
 
     Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
     with open('./Checkpoint/%s/basic_info_%s.pkl' % (Model_Name, Is_Adv_Training), 'rb') as f:
@@ -53,12 +55,23 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     Layer_Name = [str(i) for i in range(Layer_Num)]
 
     # Green = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
-    Greens = plt.get_cmap('Greens')
-    Reds = plt.get_cmap('Reds')
-    # Red = plt.cm.ScalarMappable(cmap='Reds', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+
+    std_color, adv_color = 'winter_r', 'autumn_r'
+    # cmap_std = plt.get_cmap('coolwarm')
+    # cmap_adv = plt.get_cmap('coolwarm')
+    cmap_std = plt.get_cmap(std_color)
+    cmap_adv = plt.get_cmap(adv_color)
+
+    # cmap_std = plt.get_cmap('Blues')  # summer 偏绿色
+    # cmap_adv = plt.get_cmap('Reds')  # summer 偏红色
+    s_cmap_std = plt.cm.ScalarMappable(cmap=std_color, norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    s_cmap_adv = plt.cm.ScalarMappable(cmap=adv_color, norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+    c_std = [cmap_std(i / Std_Epoch_Num * 1.0) for i in range(Std_Epoch_Num)]
+    c_adv = [cmap_adv(i / Std_Epoch_Num * 1.0) for i in range(Std_Epoch_Num)]
+    # Red = plt.cm.ScalarMappable(cmap='cmap_adv', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     # sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
-    label_formatter_float = FormatStrFormatter('%.1f')  # 设置x轴标签文本的格式
+    label_formatter_float = FormatStrFormatter('%.2f')  # 设置x轴标签文本的格式
     label_formatter_int = FormatStrFormatter('%d')  # 设置y轴标签文本的格式
 
     # subplot2grid, size = （行,列）, 块起始点坐标
@@ -74,7 +87,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax00.plot(Epochs, analytic_data['train_loss'], label='Train set')
     ax00.plot(Epochs, analytic_data['test_clean_loss'], label='Clean test')
     ax00.plot(Epochs, analytic_data['test_adv_loss'], label='Adv test')
-    ax00.legend()
+    ax00.legend(prop={'size': 13})
     # -------------------
     ax01 = fig.add_subplot(spec[0, 1])
     ax01.set_xlabel('Epochs')
@@ -82,16 +95,29 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
     ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
     ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
-    ax01.legend()
+    ax01.legend(prop={'size': 13})
 
-    # -------------------------------------------overlook by Upper mutual info---------------------
-    ax01 = fig.add_subplot(spec[0, 1])
-    ax01.set_xlabel('Epochs')
-    ax01.set_ylabel('Accuracy (%)')
-    ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
-    ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
-    ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
-    ax01.legend()
+    # -------------------------------------------overlook by Upper mutual info-------------------------
+    ax02 = fig.add_subplot(spec[0, 2])
+    ax02.set_xlabel('Layer index')
+    ax02.set_ylabel(r'$I(T;X)$' + ' (bits)')
+    ax02.set_title('The I(T;X) lower bound')
+    ax02.legend(line_legends, ['std', 'adv'], prop={'size': 13})
+
+    ax03 = fig.add_subplot(spec[0, 3])
+    ax03.set_xlabel('Layer index')
+    ax03.set_ylabel(r'$I(T;Y)$' + ' (bits)')
+    ax03.set_title('The I(T;Y) lower bound')
+
+    for i in Epochs:
+        # std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
+        # adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
+
+        ax02.plot(Layer_Name, std.epoch_MI_hM_X_lower[i], color=cmap_std(i / Std_Epoch_Num), marker='o')
+        ax02.plot(Layer_Name, adv.epoch_MI_hM_X_lower[i], color=s_cmap_adv.to_rgba(i + 1), marker='+')
+
+        ax03.plot(Layer_Name, std.epoch_MI_hM_Y_lower[i], color=s_cmap_std.to_rgba(i + 1), marker='o')
+        ax03.plot(Layer_Name, adv.epoch_MI_hM_Y_lower[i], color=s_cmap_adv.to_rgba(i + 1), marker='+')
 
     # -------------------------------------------mutual information spilt by Layer---------------------
     def axs_plot(fig, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type, Row_i):
@@ -119,32 +145,32 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
                 ax.set_xlabel(r'$I(T;X)$' + ' (bits)')
             #  设置图例
             if layer_i == 0 and Row_i == 1:
-                ax.legend(marker_legends, ['std', 'adv'])
+                ax.legend(marker_legends, ['std', 'adv'], prop={'size': 13})
             #  设置标题
             if Row_i == 1:
-                ax.set_title('Layer index %d' % (layer_i + 1))
+                ax.set_title('Layer %d' % (layer_i + 1))
 
-            c = np.array(Epochs)
-            c_bar_std = ax.scatter(std_I_TX[..., layer_i], std_I_TY[..., layer_i],
-                                   c=c,
-                                   cmap=Greens,
-                                   marker='o',
-                                   # facecolors='none',
-                                   # edgecolors=c,
+            # c = np.array(Epochs)
+            # c = Epochs
+            # 将0-1之间得数值映射到颜色条上的点 colors.LinearSegmentColormap(Colormap)：是Colormap的子类。
 
-                                   # linestyle='-', linewidth=0.1,
-                                   # zorder=2
-                                   )
-            c_bar_adv = ax.scatter(adv_I_TX[..., layer_i], adv_I_TY[..., layer_i],
-                                   c=c,
-                                   cmap=Reds,
-                                   marker='+',
-                                   # linestyle='+', linewidth=0.1,
-                                   # zorder=2
-                                   )
-            # 设定 x,y label 的数据格式
-            ax.xaxis.set_major_formatter(label_formatter_float)
-            ax.yaxis.set_major_formatter(label_formatter_float)
+            ax.scatter(std_I_TX[..., layer_i], std_I_TY[..., layer_i],
+                       color='none',
+                       # cmap=cmap_std,
+                       marker='o',
+                       s=40,
+                       # facecolors='none',
+                       edgecolors=c_std,
+                       )
+            # + 不适宜使用空心方案
+            ax.scatter(adv_I_TX[..., layer_i], adv_I_TY[..., layer_i],
+                       color=c_adv,
+                       marker='+',
+                       s=40,
+                       )
+            # 设定 x,y label 的显示样式
+            # ax.xaxis.set_major_formatter(label_formatter_float)
+            # ax.yaxis.set_major_formatter(label_formatter_float)
 
             # ax.set_ylim((i_tx_min, i_tx_max))
             # ax.set_ylim((i_tx_min, i_tx_max))
@@ -154,9 +180,9 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
 
             # 设置 color_bar
             if layer_i == (Layer_Num - 1) and Row_i == 1:
-                fig.colorbar(c_bar_std, ax=ax)
+                fig.colorbar(s_cmap_std, ax=ax)
             if layer_i == (Layer_Num - 1) and Row_i == 3:
-                fig.colorbar(c_bar_adv, ax=ax)
+                fig.colorbar(s_cmap_adv, ax=ax)
 
     # std/adv Upper
     axs_plot(fig,
@@ -205,7 +231,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         axs[0][layer_i].yaxis.set_major_formatter(label_formatter_int)
         axs[1][layer_i].yaxis.set_major_formatter(label_formatter_int)
 
-        axs[0][layer_i].set_title('Layer Index %d' % layer_i)
+        axs[0][layer_i].set_title('Layer %d' % layer_i)
         # epoch_i, layer_i, label_i
         axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
                              color=COLOR[0],
