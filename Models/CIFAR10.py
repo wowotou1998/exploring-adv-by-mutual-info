@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-'''LeNet_cifar10 in PyTorch.'''
+'''LeNet_3_32_32 in PyTorch.'''
 
 # codes are import from https://github.com/xternalz/WideResNet-pytorch/blob/master/wideresnet.py
 # original author: xternalz
@@ -287,20 +287,16 @@ class CNN_1_cifar10(nn.Module):
         return x
 
 
-class LeNet_cifar10(nn.Module):
+class LeNet_3_32_32(nn.Module):
     def __init__(self):
-        super(LeNet_cifar10, self).__init__()
+        super(LeNet_3_32_32, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
-        self.modules_to_hook = ('conv1',
-                                'conv2',
-                                'fc1',
-                                'fc2',
-                                'fc3')
+        self.modules_to_hook = (nn.Conv2d, nn.Linear)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))

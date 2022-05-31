@@ -4,11 +4,11 @@ from Models.CIFAR10 import WideResNet
 from torchsummary import summary
 import torch
 from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
+from Models.CIFAR10 import LeNet_3_32_32, WideResNet, VGG_s, RestNet18, net_cifar10
 import argparse
 
 # Model, Model_Name = FC_2(Activation_F=nn.ReLU()), 'FC_2'
-# Model, Model_Name = LeNet_cifar10(), 'LeNet_cifar10'
+# Model, Model_Name = LeNet_3_32_32(), 'LeNet_3_32_32'
 # Model, Model_Name = net_cifar10(), 'net_cifar10'
 # Model, Model_Name = VGG_s(), 'VGG_s_11'
 # Model, Model_Name = resnet18(pretrained=False, num_classes=10), 'resnet18'

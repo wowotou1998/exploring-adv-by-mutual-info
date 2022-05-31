@@ -170,7 +170,7 @@ from torchvision.models import *
 from ModelSet import *
 from Models.VGG_s import *
 
-# model, Model_Name = ModelSet.LeNet_cifar10(), 'LeNet_cifar10'
+# model, Model_Name = ModelSet.LeNet_3_32_32(), 'LeNet_3_32_32'
 # model, Model_Name = VGG_s('VGG11'), 'VGG11'
 # model, Model_Name = WideResNet_CIFAR10(depth=1 * 6 + 4, num_classes=10, widen_factor=2, dropRate=0.0), 'WideResNet_CIFAR10'
 model, Model_Name = FC_2(Activation_F=torch.nn.ReLU()), 'FC_2'
@@ -201,7 +201,7 @@ modules_to_hook = (torch.nn.Sigmoid)
 #                    'block2.layer.0.relu2',
 #                    'block3.layer.0.relu2',
 #                    'fc')
-# net_cifar10, LeNet_cifar10
+# net_cifar10, LeNet_3_32_32
 # modules_to_hook = ('conv1',
 #                    'conv2',
 #                    'fc1',

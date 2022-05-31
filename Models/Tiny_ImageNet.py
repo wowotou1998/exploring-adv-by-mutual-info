@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-'''LeNet_cifar10 in PyTorch.'''
+'''LeNet_3_32_32 in PyTorch.'''
 
 # codes are import from https://github.com/xternalz/WideResNet-pytorch/blob/master/wideresnet.py
 # original author: xternalz

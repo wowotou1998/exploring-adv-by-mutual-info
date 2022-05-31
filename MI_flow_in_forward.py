@@ -27,6 +27,7 @@ import torch.nn.functional as F
 
 class Forward():
     def __init__(self, Origin_Model, args):
+        self.Args = args
         self.Origin_Model = Origin_Model
         self.Model_Name = args.Model_Name
         self.Data_Set = args.Data_Set
@@ -150,13 +151,13 @@ class Forward():
 
     def train_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=self.Args.Eps, alpha=self.Args.Alpha, steps=self.Args.Step, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
         return atk
 
     def test_attack(self, Model, Random_Start=False):
         # atk = PGD(Model, eps=args.Eps, alpha=args.Eps * 1.2 / 7, steps=7, random_start=Random_Start)
-        atk = PGD(Model, eps=8 / 255, alpha=2 / 255, steps=7, random_start=Random_Start)
+        atk = PGD(Model, eps=self.Args.Eps, alpha=self.Args.Alpha, steps=self.Args.Step, random_start=Random_Start)
         # atk = PGD(Model, eps=12 / 255, alpha=3 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=16 / 255, alpha=4 / 255, steps=7, random_start=Random_Start)
         # atk = PGD(Model, eps=30 / 255, alpha=5 / 255, steps=7, random_start=Random_Start)
@@ -196,8 +197,6 @@ class Forward():
             with torch.enable_grad():
                 adv_images = atk(batch_images, batch_labels)
                 return adv_images, batch_labels
-
-    # this training function is only for classification task
 
     @torch.no_grad()
     def calculate_acc_and_mutual_info(self, Model, Keep_Clean):
@@ -353,7 +352,7 @@ class Forward():
         from pylab import mpl
 
         mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
-        mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
+        # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
         mpl.rcParams['figure.constrained_layout.use'] = True
         plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
         plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
@@ -662,34 +661,35 @@ if __name__ == '__main__':
 
     from torchvision.models import *
     from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-    from Models.CIFAR10 import LeNet_cifar10, WideResNet, VGG_s, RestNet18, net_cifar10
+    from Models.CIFAR10 import LeNet_3_32_32, WideResNet, VGG_s, RestNet18, net_cifar10
     from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
     Model_dict['FC_2'] = FC_2(Activation_F=nn.ReLU())
-    Model_dict['LeNet_cifar10'] = LeNet_cifar10()
-    Model_dict['net_cifar10'] = net_cifar10()
-    Model_dict['VGG_s'] = VGG_s()
-    Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
-    Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
-    Model_dict['vgg11'] = vgg11(pretrained=False)
+    Model_dict['LeNet_3_32_32'] = LeNet_3_32_32()
+    # Model_dict['net_cifar10'] = net_cifar10()
+    # Model_dict['VGG_s'] = VGG_s()
+    # Model_dict['resnet18'] = resnet18(pretrained=False, num_classes=10)
+    # Model_dict['resnet34'] = resnet34(pretrained=False, num_classes=10)
+    # Model_dict['vgg11'] = vgg11(pretrained=False)
     Model_dict['WideResNet_CIFAR10'] = WideResNet(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
     Model_dict['WideResNet_STL10'] = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1,
                                                         dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
-    # parser.add_argument('--Model_Name', default='LeNet_cifar10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='LeNet_3_32_32', type=str, help='The Model_Name.')
     parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
     parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
 
-    # parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
-    # parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
     parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=6, type=bool, help='Forward_Repeat')
+
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
-    # parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
-    parser.add_argument('--Eps', default=8 / 255, type=float, help='dataset.')
+
+    parser.add_argument('--Eps', default=8 / 255, type=float, help='perturbation magnitude')
+    parser.add_argument('--Alpha', default=2 / 255, type=float, help='the perturbation in each step')
+    parser.add_argument('--Step', default=7, type=int, help='the step')
 
     args = parser.parse_args()
 
