@@ -235,7 +235,8 @@ class Trainer():
         # 计算存储互信息
         # calculate mutual info
         estimator.layer_activations = layer_activation_chunk
-        estimator.caculate_MI(image_chunk.cpu(), label_chunk.cpu())
+        # estimator.caculate_MI(image_chunk.cpu(), label_chunk.cpu())
+        estimator.caculate_MI(image_chunk, label_chunk)
         estimator.store_MI()
         # estimator.clear_activations()
 
@@ -529,13 +530,14 @@ if __name__ == '__main__':
             os.makedirs(dir)
 
     from torchvision.models import *
-    from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
+    from Models.MNIST import FC_Sigmoid, LeNet_1_28_28, FC_2
     from Models.CIFAR10 import LeNet_3_32_32, WideResNet, VGG_s, RestNet18, net_cifar10
     from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
     Model_dict['FC_2'] = FC_2(Activation_F=nn.ReLU())
+    Model_dict['LeNet_MNIST'] = LeNet_1_28_28()
     Model_dict['LeNet_CIFAR10'] = LeNet_3_32_32()
     # Model_dict['net_cifar10'] = net_cifar10()
     # Model_dict['VGG_s'] = VGG_s()
@@ -550,22 +552,23 @@ if __name__ == '__main__':
     #                                                             dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
-    # parser.add_argument('--Model_Name', default='LeNet_3_32_32', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
-    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+    parser.add_argument('--Data_Set', default='MNIST', type=str, help='The Data_Set.')
 
-    parser.add_argument('--Eps', default=4 / 255, type=float, help='perturbation magnitude')
-    parser.add_argument('--Alpha', default=1 / 255, type=float, help='the perturbation in each step')
+    parser.add_argument('--Eps', default=45 / 255, type=float, help='perturbation magnitude')
+    parser.add_argument('--Alpha', default=8 / 255, type=float, help='the perturbation in each step')
     parser.add_argument('--Step', default=7, type=int, help='the step')
 
-    parser.add_argument('--Std_Epoch_Num', default=2, type=int, help='The epochs.')
+    parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')
 
     parser.add_argument('--Label_Num', default=10, type=int, help='The Label_Num.')
 
     parser.add_argument('--Learning_Rate', default=0.1, type=float, help='The learning rate.')
-    parser.add_argument('--Forward_Size', default=750, type=int, help='Forward_Size.')
-    parser.add_argument('--Forward_Repeat', default=6, type=int, help='Forward_Repeat')
+    parser.add_argument('--Forward_Size', default=2500, type=int, help='Forward_Size.')
+    parser.add_argument('--Forward_Repeat', default=2, type=int, help='Forward_Repeat')
     parser.add_argument('--GPU', default=0, type=int, help='The GPU id.')
     parser.add_argument('--batch_size', default=128, type=int, help='The Train_Batch_Size.')
 

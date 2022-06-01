@@ -692,7 +692,8 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
