@@ -179,9 +179,9 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
 
             # 设置 color_bar
             if layer_i == (Layer_Num - 1) and Row_i == 1:
-                fig.colorbar(s_cmap_std, ax=ax)
+                fig.colorbar(s_cmap_std, ax=ax, ticks=[0, 100, 200], label='ST epoch')
             if layer_i == (Layer_Num - 1) and Row_i == 3:
-                fig.colorbar(s_cmap_adv, ax=ax)
+                fig.colorbar(s_cmap_adv, ax=ax, ticks=[0, 100, 200], label='AT epoch')
 
     # std/adv Upper
     axs_plot(fig,
@@ -681,11 +681,11 @@ if __name__ == '__main__':
 
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['font.sans-serif'] = ['Arial']
+    mpl.rcParams['backend'] = 'agg'
+    mpl.rcParams["font.size"] = 18
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
     mpl.rcParams['figure.constrained_layout.use'] = True
-    mpl.rcParams['backend'] = 'agg'
-    mpl.rcParams["font.size"] = 18
     plt.rcParams['xtick.direction'] = 'in'  # 将x周的刻度线方向设置向内
     plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
