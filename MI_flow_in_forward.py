@@ -617,7 +617,7 @@ class Forward():
         Std_Epoch_Num = len(st_saturation_std.epoch_MI_hM_X_upper)
         Epochs = [i for i in range(Std_Epoch_Num)]
         Layer_Num = len(st_saturation_std.epoch_MI_hM_X_upper[0])
-        Layer_Name = [str(i) for i in range(Layer_Num)]
+        Layer_Name = [str(i + 1) for i in range(Layer_Num)]
         Saturation_L = [str(i) for i in self.Saturation_L]
         Patch_L = [str(i) for i in self.Patch_Split_L]
 
@@ -634,83 +634,86 @@ class Forward():
         # fig size, 先列后行
         nrows = 2
         ncols = 4
-        fig, axs = plt.subplots(nrows, ncols, figsize=(15, 15), )
+        px = 1 / plt.rcParams['figure.dpi']  # pixel in inches
+        plt.show()
+        Fig_Size = (1080, 1920)
+        fig, axs = plt.subplots(nrows, ncols, figsize=(Fig_Size[1] * px, Fig_Size[0] * px), )
         # -------------------------------------------Loss and Accuracy Detail---------------------
         # ------------- (Standard Training) ST -------------------------
-        axs[0][0].set_xlabel('Saturation')
+        axs[0][0].set_xlabel('Saturation level')
         axs[0][0].set_ylabel('Loss')
 
         # axs[0][0].plot(Epochs, st_saturation_mi_loss_acc['train_loss'], label='train_loss')
         axs[0][0].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_clean_loss'],
                        linestyle='-', c='C0', marker='o', markerfacecolor='none',
-                       label='st test_clean_loss')
+                       label='ST clean test')
         axs[0][0].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none',
-                       label='st test_adv_loss')
+                       linestyle=':', c='C0', marker='P', markerfacecolor='none',
+                       label='ST adv test')
 
         axs[0][0].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none',
-                       label='at test_clean_loss')
+                       linestyle='-', c='C1', marker='o', markerfacecolor='none',
+                       label='AT clean test')
         axs[0][0].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_loss'],
                        linestyle=':', c='C1', marker='P', markerfacecolor='none',
-                       label='at test_adv_loss')
+                       label='AT adv test')
         # TODO 加上 AT model 的数据
         axs[0][0].legend()
         # -------------------
-        axs[0][1].set_xlabel('Saturation')
+        axs[0][1].set_xlabel('Saturation level')
         axs[0][1].set_ylabel('Accuracy (%)')
         # axs[0][1].set_title('Standard training')
         # axs[0][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
         axs[0][1].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none',
+                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='st test_clean_acc')
         axs[0][1].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none',
+                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='st test_adv_acc')
 
         axs[0][1].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none',
+                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='at test_clean_acc')
         axs[0][1].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none',
+                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='at test_adv_acc')
         # ------------- (Adversarial Training) AT -------------------------
-        axs[0][2].set_xlabel('Patch')
+        axs[0][2].set_xlabel('Patch level')
         axs[0][2].set_ylabel('Loss')
         # axs[0][2].set_title('Adversarial training')
         # axs[0][0].plot(Epochs, st_saturation_mi_loss_acc['train_loss'], label='train_loss')
         axs[0][2].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none',
+                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='st test_clean_loss')
         axs[0][2].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none',
+                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='st test_adv_loss')
 
         axs[0][2].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none',
+                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='st test_clean_loss')
         axs[0][2].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none',
+                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='st test_adv_loss')
 
         # axs[0][2].legend()
         # -------------------
-        axs[0][3].set_xlabel('Patch')
+        axs[0][3].set_xlabel('Patch level')
         axs[0][3].set_ylabel('Accuracy (%)')
         # axs[0][3].set_title('Adversarial training')
         # axs[0][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
         axs[0][3].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none',
+                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='st test_clean_acc')
         axs[0][3].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none',
+                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='st test_adv_acc')
 
         axs[0][3].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none',
+                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
                        label='st test_clean_acc')
         axs[0][3].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none',
+                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='st test_adv_acc')
         # axs[0][1].legend()
 
@@ -726,7 +729,7 @@ class Forward():
             std_I_TY = np.array(std_I_TY)
             adv_I_TX = np.array(adv_I_TX)
             adv_I_TY = np.array(adv_I_TY)
-            line_style = '-' if transform_type == 'Saturation' else ':'
+            marker_style = 's' if transform_type == 'Patch' else 'x'
 
             # 设定坐标范围
             # i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.1
@@ -759,15 +762,16 @@ class Forward():
                 # axs[1].legend(line_legends, ['st_saturation_std', 'st_saturation_adv'])
 
                 axs[0].plot(Layer_Name, std_I_TX_level_i,
-                            linestyle=line_style,  # 是 saturation 还是 Patch
+                            linestyle='-',  # 是 saturation 还是 Patch
                             color=c,  # level 水平
-                            marker='o',  # 对抗样本还是普通样本
+                            marker=marker_style,  # 对抗样本还是普通样本
+                            markerfacecolor='none',
                             linewidth=1,
                             label='%s %s(%s)' % ('std', transform_type, level_i)
                             )
                 axs[0].plot(Layer_Name, adv_I_TX_level_i,
-                            color=c, marker='^',
-                            linestyle=line_style, linewidth=1,
+                            color=c, marker=marker_style, markerfacecolor='none',
+                            linestyle=':', linewidth=1,
                             label='%s %s(%s)' % ('adv', transform_type, level_i)
                             )
                 # 设定 x 轴坐标范围
@@ -775,19 +779,19 @@ class Forward():
                 # axs[1].set_ylim((i_tx_min, i_tx_max))
 
                 axs[1].plot(Layer_Name, std_I_TY_level_i,
-                            color=c, marker='o',
-                            linestyle=line_style, linewidth=1,
+                            color=c, marker=marker_style,
+                            linestyle='-', linewidth=1, markerfacecolor='none',
                             label='%s %s(%s)' % ('std', transform_type, level_i)
                             )
                 axs[1].plot(Layer_Name, adv_I_TY_level_i,
-                            color=c, marker='^',
-                            linestyle=line_style, linewidth=1,
+                            color=c, marker=marker_style, markerfacecolor='none',
+                            linestyle=':', linewidth=1,
                             label='%s %s(%s)' % ('adv', transform_type, level_i)
                             )
                 # 设定 y 轴坐标范围
                 # axs[2].set_ylim((i_ty_min, i_ty_max))
                 # axs[3].set_ylim((i_ty_min, i_ty_max))
-                axs[0].legend(prop={'size': 10}, ncol=2)
+
                 # axs[0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.,prop={'size':8},ncol=2)
                 # axs[0].legend(bbox_to_anchor=(0, -1.5, 1, 1), loc='upper left', borderaxespad=0.,
                 #               prop={'size': 8}, ncol=len(self.Saturation_L)*2)
@@ -822,6 +826,9 @@ class Forward():
                  st_patch_adv.epoch_MI_hM_X_lower, st_patch_adv.epoch_MI_hM_Y_lower,
                  patch_levels, transform_type='Patch', MI_Type='lower'
                  )
+        # axs[1][0].legend(ncol=1, prop={'size': 10}, loc='upper right', bbox_to_anchor=(-0.2, 1))
+        # axs[1][0].legend(ncol=2, prop={'size': 10})
+        # axs[1][0].legend(ncol=2,prop={'size': 10})
 
         # st_saturation_std/st_saturation_adv Lower
         axs[1][2].set_title('Adversarial training')
@@ -837,15 +844,15 @@ class Forward():
                  at_patch_adv.epoch_MI_hM_X_lower, at_patch_adv.epoch_MI_hM_Y_lower,
                  patch_levels, transform_type='Patch', MI_Type='lower'
                  )
+        # axs[1][3].legend(ncol=2, loc='upper left', bbox_to_anchor=(1, 1))
+        axs[1][3].legend(ncol=1, prop={'size': 10})
 
-        fig.suptitle(title)
+        # fig.suptitle(title)
         # fig.colorbar(sm, ax=axs, label='Epoch')
 
         # if Enable_Show:
-        plt.show()
-        # fig.savefig('mutual_info_%s_%s_%s.pdf' % (
-        #     Model_Name, Is_Adv_Training,
-        #     datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+        # plt.show()
+        fig.savefig('mi_plane_transformation_%s.pdf' % (Model_Name.lower()))
 
         print("Work has done!")
 
@@ -1148,11 +1155,11 @@ if __name__ == '__main__':
                                                         dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
-    # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
 
-    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
-    # parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
+    # parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
 
     parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=10, type=int, help='Forward_Repeat')
