@@ -14,7 +14,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 # Forward_Repeat, Forward_Size = 1, 2
 # line_styles = ['-', ':']
-# labels = ['std', 'adv']  # legend标签列表，上面的color即是颜色列表
+# labels = ['Clean', 'Adv']  # legend标签列表，上面的color即是颜色列表
 
 
 # fig, ax = plt.subplots()
@@ -52,7 +52,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
     Epochs = [i for i in range(Std_Epoch_Num)]
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
-    Layer_Name = [str(i) for i in range(Layer_Num)]
+    Layer_Name = [str(i + 1) for i in range(Layer_Num)]
 
     # Green = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
@@ -88,7 +88,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax00.plot(Epochs, analytic_data['test_clean_loss'], label='Clean test')
     ax00.plot(Epochs, analytic_data['test_adv_loss'], label='Adv test')
     # ax00.legend(prop={'size': 13})
-    ax00.legend()
+    ax00.legend(prop={'size': 10})
     # -------------------
     ax01 = fig.add_subplot(spec[0, 1])
     ax01.set_xlabel('Epochs')
@@ -97,15 +97,15 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
     ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
     # ax01.legend(prop={'size': 13})
-    ax01.legend()
+    ax01.legend(prop={'size': 10})
 
     # -------------------------------------------overlook by Upper mutual info-------------------------
     ax02 = fig.add_subplot(spec[0, 2])
     ax02.set_xlabel('Layer index')
     ax02.set_ylabel(r'$I(T;X)$' + ' (bits)')
     ax02.set_title('The I(T;X) lower bound')
-    # ax02.legend(line_legends, ['std', 'adv'], prop={'size': 13})
-    ax02.legend(line_legends, ['std', 'adv'])
+    # ax02.legend(line_legends, ['Clean', 'Adv'], prop={'size': 13})
+    ax02.legend(line_legends, ['Clean', 'Adv'])
 
     ax03 = fig.add_subplot(spec[0, 3])
     ax03.set_xlabel('Layer index')
@@ -148,8 +148,8 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
                 ax.set_xlabel(r'$I(T;X)$' + ' (bits)')
             #  设置图例
             if layer_i == 0 and Row_i == 1:
-                # ax.legend(marker_legends, ['std', 'adv'], prop={'size': 13})
-                ax.legend(marker_legends, ['std', 'adv'])
+                # ax.legend(marker_legends, ['Clean', 'Adv'], prop={'size': 13})
+                ax.legend(marker_legends, ['Clean', 'Adv'])
             #  设置标题
             if Row_i == 1:
                 ax.set_title('Layer %d' % (layer_i + 1))
@@ -199,21 +199,20 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
              adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
              Std_Epoch_Num, MI_Type='Lower', Row_i=2
              )
-    # std/adv Bin
+    # std/adv Binning
     axs_plot(fig,
              std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
              adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
-             Std_Epoch_Num, MI_Type='Bin', Row_i=3
+             Std_Epoch_Num, MI_Type='Binning', Row_i=3
              )
-    title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s" % (
+    title = "%s(%s),LR(%.3f),Upper/Lower/Binning,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
-    fig.suptitle(title)
-    plt.show()
+    # fig.suptitle(title)
+    # plt.show()
 
-    # fig.savefig('mutual_info_%s_%s_%s.pdf' % (
-    #     Model_Name, Is_Adv_Training,
-    #     datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+    fig.savefig('mi_plane_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
+    # datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
     # -------------------------------------------Mutual Information Detail---------------------
     # 设定坐标范围
@@ -235,7 +234,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         axs[0][layer_i].yaxis.set_major_formatter(label_formatter_int)
         axs[1][layer_i].yaxis.set_major_formatter(label_formatter_int)
 
-        axs[0][layer_i].set_title('Layer %d' % layer_i)
+        axs[0][layer_i].set_title('Layer %d' % (layer_i + 1))
         # epoch_i, layer_i, label_i
         axs[0][layer_i].plot(Epochs, std_lower_detail[..., layer_i, -1],
                              color=COLOR[0],
@@ -270,9 +269,10 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
-    fig2.suptitle(title)
-    plt.show()
+    # fig2.suptitle(title)
+    # plt.show()
     # fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+    fig.savefig('mi_plane_detail_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
     print("Work has done!")
 
 
@@ -310,12 +310,12 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
     Std_Epoch_Num = len(std.epoch_MI_hM_X_upper)
     Epochs = [i for i in range(Std_Epoch_Num)]
     Layer_Num = len(std.epoch_MI_hM_X_upper[0])
-    Layer_Name = [str(i) for i in range(Layer_Num)]
+    Layer_Name = [str(i + 1) for i in range(Layer_Num)]
 
     # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
     sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
 
-    title = "%s(%s),LR(%.3f),Upper/Lower/Bin,Clean(Adv),Sample_N(%d),%s" % (
+    title = "%s(%s),LR(%.3f),Upper/Lower/Binning,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
 
@@ -340,8 +340,8 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
 
             axs[0].set_title(MI_Type)
 
-            axs[0].legend(line_legends, ['std', 'adv'])
-            axs[1].legend(line_legends, ['std', 'adv'])
+            axs[0].legend(line_legends, ['Clean', 'Adv'])
+            axs[1].legend(line_legends, ['Clean', 'Adv'])
 
             axs[0].plot(Layer_Name, std_I_TX_epoch_i,
                         color=c, marker='o',
@@ -399,11 +399,11 @@ def plot_mutual_info(Model_Name, Enable_Adv_Training):
              adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
              Std_Epoch_Num, MI_Type='lower'
              )
-    # std/adv Bin
+    # std/adv Binning
     axs_plot(axs[2],
              std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
              adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
-             Std_Epoch_Num, MI_Type='bin'
+             Std_Epoch_Num, MI_Type='Binning'
              )
 
     # plt.scatter(I_TX, I_TY,
@@ -692,7 +692,7 @@ if __name__ == '__main__':
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['font.sans-serif'] = ['Arial']
     mpl.rcParams['backend'] = 'agg'
-    # mpl.rcParams["font.size"] = 18
+    # mpl.rcParams["font.size"] = 12
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
     mpl.rcParams['figure.constrained_layout.use'] = True
@@ -702,18 +702,17 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    # parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
-    # parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
-    # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
     # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=True)
     # plot_mutual_info(Model_Name, Enable_Adv_Training=True)
-
+    # parser.add_argument('--Model_Name', default='LeNet_CIFAR10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='FC_2', type=str, help='The Model_Name.')
     # vegetables = ["cucumber", "tomato", "lettuce", "asparagus",
     #               "potato", "wheat", "barley"]
     # farmers = ["Farmer Joe", "Upland Bros.", "Smith Gardening",
