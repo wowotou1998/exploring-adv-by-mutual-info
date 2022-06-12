@@ -76,8 +76,8 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
 
     # subplot2grid, size = （行,列）, 块起始点坐标
     # grid_size = (4, Layer_Num)
-    Fig_Size = (25.6, 14.4)
-    fig = plt.figure(figsize=Fig_Size, constrained_layout=True)
+    Fig_Size = (6, 10)
+    fig = plt.figure(figsize=(Fig_Size[1], Fig_Size[0]), constrained_layout=True)
     spec = fig.add_gridspec(4, Layer_Num)
 
     # -------------------------------------------Loss and Accuracy Detail---------------------
@@ -87,7 +87,8 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax00.plot(Epochs, analytic_data['train_loss'], label='Train set')
     ax00.plot(Epochs, analytic_data['test_clean_loss'], label='Clean test')
     ax00.plot(Epochs, analytic_data['test_adv_loss'], label='Adv test')
-    ax00.legend(prop={'size': 13})
+    # ax00.legend(prop={'size': 13})
+    ax00.legend()
     # -------------------
     ax01 = fig.add_subplot(spec[0, 1])
     ax01.set_xlabel('Epochs')
@@ -95,14 +96,16 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
     ax01.plot(Epochs, analytic_data['test_clean_acc'], label='Clean test')
     ax01.plot(Epochs, analytic_data['test_adv_acc'], label='Adv test')
-    ax01.legend(prop={'size': 13})
+    # ax01.legend(prop={'size': 13})
+    ax01.legend()
 
     # -------------------------------------------overlook by Upper mutual info-------------------------
     ax02 = fig.add_subplot(spec[0, 2])
     ax02.set_xlabel('Layer index')
     ax02.set_ylabel(r'$I(T;X)$' + ' (bits)')
     ax02.set_title('The I(T;X) lower bound')
-    ax02.legend(line_legends, ['std', 'adv'], prop={'size': 13})
+    # ax02.legend(line_legends, ['std', 'adv'], prop={'size': 13})
+    ax02.legend(line_legends, ['std', 'adv'])
 
     ax03 = fig.add_subplot(spec[0, 3])
     ax03.set_xlabel('Layer index')
@@ -145,7 +148,8 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
                 ax.set_xlabel(r'$I(T;X)$' + ' (bits)')
             #  设置图例
             if layer_i == 0 and Row_i == 1:
-                ax.legend(marker_legends, ['std', 'adv'], prop={'size': 13})
+                # ax.legend(marker_legends, ['std', 'adv'], prop={'size': 13})
+                ax.legend(marker_legends, ['std', 'adv'])
             #  设置标题
             if Row_i == 1:
                 ax.set_title('Layer %d' % (layer_i + 1))
@@ -218,7 +222,8 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     #
     # i_ty_min = math.floor(min(np.min(std_I_TY), np.min(adv_I_TY))) - 0.5
     # i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY)))
-    fig2, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(17, 7), constrained_layout=True)
+    Fig_Size_2 = (4, 10)
+    fig2, axs = plt.subplots(nrows=2, ncols=Layer_Num, figsize=(Fig_Size_2[1], Fig_Size_2[0]), constrained_layout=True)
     std_lower_detail = np.array(std.epoch_MI_hM_Y_lower_detail)
     adv_lower_detail = np.array(adv.epoch_MI_hM_Y_lower_detail)
     # C0-C9 是 matplotlib 里经常使用的色条
@@ -252,7 +257,12 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
                                  color=COLOR[label_i + 1],
                                  label=r'$H(T_i|y_%d)$' % (label_i))
     # 只有第一个子图显示 legend 信息
-    axs[0][0].legend(ncol=2, prop={'size': 13})
+    # axs[0][0].legend(ncol=2, prop={'size': 13})
+    # axs[1][Layer_Num - 1].legend(ncol=2, loc='upper left', bbox_to_anchor=(1.1, 1), )
+    # axs[1][Layer_Num - 1].legend(ncol=2, loc='upper left', bbox_to_anchor=(1, 1), )legen
+    # axs[0][0].get_legend_handles_labels()
+
+    # leg2 = ax2.legend(*ax.get_legend_handles_labels(), loc=(0.8, 0.85))
     # 只有最左侧的子图显示 y label 信息
     axs[0][0].set_ylabel('Std')
     axs[1][0].set_ylabel('Adv')
@@ -682,7 +692,7 @@ if __name__ == '__main__':
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['font.sans-serif'] = ['Arial']
     mpl.rcParams['backend'] = 'agg'
-    mpl.rcParams["font.size"] = 18
+    # mpl.rcParams["font.size"] = 18
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
     mpl.rcParams['figure.constrained_layout.use'] = True
