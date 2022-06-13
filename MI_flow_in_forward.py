@@ -579,8 +579,7 @@ class Forward():
         plt.rcParams['ytick.direction'] = 'in'  # 将y轴的刻度方向设置向内
 
         from matplotlib.lines import Line2D
-        line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
-                        Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
+
         import math
         Is_Adv_Training = 'Std_Train'
         Model_Name = self.Model_Name
@@ -614,15 +613,22 @@ class Forward():
                                      at_patch_mi_loss_acc['adv_estimator']
         # Model_Name = basic_info['Model']
 
-        Std_Epoch_Num = len(st_saturation_std.epoch_MI_hM_X_upper)
-        Epochs = [i for i in range(Std_Epoch_Num)]
+        Level_Num_Max = max(len(st_saturation_std.epoch_MI_hM_X_upper), len(st_patch_std.epoch_MI_hM_X_upper))
+        print('Level_Num_Max', Level_Num_Max)
         Layer_Num = len(st_saturation_std.epoch_MI_hM_X_upper[0])
         Layer_Name = [str(i + 1) for i in range(Layer_Num)]
         Saturation_L = [str(i) for i in self.Saturation_L]
         Patch_L = [str(i) for i in self.Patch_Split_L]
 
         # sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
-        sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
+        # bins = [i for i in range(Level_Num_Max)]
+        # nbin = len(bins) - 1
+        # import matplotlib as mpl
+        # cmap = mpl.cm.get_cmap('viridis', nbin)
+        # bd_norm = mpl.colors.BoundaryNorm(bins, nbin)
+        # sm = mpl.cm.ScalarMappable(norm=bd_norm, cmap=cmap)
+        # Level_Num_Max = 5 则数据应该在 -0.5 ~ +4.5之间
+        sm = plt.cm.ScalarMappable(cmap='jet', norm=plt.Normalize(vmin=-0.5, vmax=Level_Num_Max - 0.5))
 
         title = "%s,Upper/Lower/Bin,Clean(Adv),Sample_N(%d),Std/Adv train" % (
             Model_Name, Forward_Repeat * Forward_Size,
@@ -634,12 +640,13 @@ class Forward():
         # fig size, 先列后行
         nrows = 2
         ncols = 4
-        px = 1 / plt.rcParams['figure.dpi']  # pixel in inches
+        # px = 1 / plt.rcParams['figure.dpi']  # pixel in inches
+        px = 1
         plt.show()
-        Fig_Size = (1080, 1920)
+        Fig_Size = (5, 11)
         fig, axs = plt.subplots(nrows, ncols, figsize=(Fig_Size[1] * px, Fig_Size[0] * px), )
-        # -------------------------------------------Loss and Accuracy Detail---------------------
-        # ------------- (Standard Training) ST -------------------------
+
+        # -------------Saturation (Standard Training) ST Loss and Accuracy Detail -------------------------
         axs[0][0].set_xlabel('Saturation level')
         axs[0][0].set_ylabel('Loss')
 
@@ -657,9 +664,8 @@ class Forward():
         axs[0][0].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_loss'],
                        linestyle=':', c='C1', marker='P', markerfacecolor='none',
                        label='AT adv test')
-        # TODO 加上 AT model 的数据
         axs[0][0].legend()
-        # -------------------
+
         axs[0][1].set_xlabel('Saturation level')
         axs[0][1].set_ylabel('Accuracy (%)')
         # axs[0][1].set_title('Standard training')
@@ -677,7 +683,7 @@ class Forward():
         axs[0][1].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_acc'],
                        linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
                        label='at test_adv_acc')
-        # ------------- (Adversarial Training) AT -------------------------
+        # ------------- Patch AT Loss and Accuracy Detail -------------------------
         axs[0][2].set_xlabel('Patch level')
         axs[0][2].set_ylabel('Loss')
         # axs[0][2].set_title('Adversarial training')
@@ -745,7 +751,8 @@ class Forward():
             i_ty_max = max(np.max(std_I_TY), np.max(adv_I_TY)) + 0.1
 
             for idx, level_i in enumerate(levels):
-                c = COLOR[idx]
+                # c = COLOR[idx]
+                c = sm.to_rgba(idx)
                 # layers = [i for i in range(1,len(I_TX)+1)]
                 std_I_TX_level_i, std_I_TY_level_i = std_I_TX[idx], std_I_TY[idx]
                 adv_I_TX_level_i, adv_I_TY_level_i = adv_I_TX[idx], adv_I_TY[idx]
@@ -845,7 +852,18 @@ class Forward():
                  patch_levels, transform_type='Patch', MI_Type='lower'
                  )
         # axs[1][3].legend(ncol=2, loc='upper left', bbox_to_anchor=(1, 1))
-        axs[1][3].legend(ncol=1, prop={'size': 10})
+        # axs[1][3].legend(ncol=1, prop={'size': 10})
+        line_legends = [Line2D([0], [0], linestyle='-', c='C0', marker='x', markerfacecolor='none'),
+                        Line2D([0], [0], linestyle=':', c='C0', marker='x', markerfacecolor='none'),
+                        Line2D([0], [0], linestyle='-', c='C0', marker='s', markerfacecolor='none'),
+                        Line2D([0], [0], linestyle=':', c='C0', marker='s', markerfacecolor='none')
+                        ]
+        axs[1][0].legend(line_legends, ['Saturation clean', 'Saturation adv', 'Patch clean', 'Patch adv'])
+        ticks_2_labels = ['Saturation 2 (Patch 0)', 'Saturation 8 (Patch 2)', 'Saturation 16 (Patch 4)',
+                          'Saturation 64 (Patch 8)', 'Saturation 1024']
+        import matplotlib
+        fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: ticks_2_labels[pos])  # print(x,pos)
+        fig.colorbar(sm, ax=axs[1][3], ticks=[i for i in range(Level_Num_Max)], format=fmt)
 
         # fig.suptitle(title)
         # fig.colorbar(sm, ax=axs, label='Epoch')
@@ -1117,7 +1135,7 @@ if __name__ == '__main__':
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['font.sans-serif'] = ['Arial']
     mpl.rcParams['backend'] = 'agg'
-    mpl.rcParams["font.size"] = 18
+    # mpl.rcParams["font.size"] = 18
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
     mpl.rcParams['figure.constrained_layout.use'] = True
@@ -1155,11 +1173,11 @@ if __name__ == '__main__':
                                                         dropRate=0.0)
 
     parser = argparse.ArgumentParser(description='Training arguments with PyTorch')
-    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
-    parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
 
-    # parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
-    parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
+    parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
+    # parser.add_argument('--Data_Set', default='CIFAR10', type=str, help='The Data_Set.')
 
     parser.add_argument('--Forward_Size', default=500, type=int, help='Forward_Size.')
     parser.add_argument('--Forward_Repeat', default=10, type=int, help='Forward_Repeat')
