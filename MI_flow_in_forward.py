@@ -44,89 +44,89 @@ class Forward():
         self.Saturation_L = [2, 8, 16, 64, 1024]  # 2
         self.Loss_Acc = None
 
-    def get_test_loader(self, Transform_Type, Level):
+    def get_test_loader(self):
         # 全局取消证书验证
         import ssl
         import random
         ssl._create_default_https_context = ssl._create_unverified_context
 
-        class Saturation_Transform(object):
-            '''
-            for each pixel v: v' = sign(2v - 1) * |2v - 1|^{2/p}  * 0.5 + 0.5
-            then clip -> (0, 1)
-            '''
-
-            def __init__(self, saturation_level=2.0):
-                self.p = saturation_level
-
-            def __call__(self, img):
-                ones = torch.ones_like(img)
-                # print(img.size(), torch.max(img), torch.min(img))
-                ret_img = torch.sign(2 * img - ones) * torch.pow(torch.abs(2 * img - ones), 2.0 / self.p)
-
-                ret_img = ret_img * 0.5 + ones * 0.5
-
-                ret_img = torch.clamp(ret_img, 0, 1)
-
-                return ret_img
-
-        class Patch_Transform(object):
-            def __init__(self, k=2):
-                self.k = k
-
-            def __call__(self, xtensor: torch.Tensor):
-                '''
-                X: torch.Tensor of shape(c, h, w)   h % self.k == 0
-                :param xtensor:
-                :return:
-                '''
-                patches = []
-                # K==0则不分割数据
-                if self.k == 0:
-                    return xtensor
-
-                c, h, w = xtensor.size()
-                dh = h // self.k
-                dw = w // self.k
-
-                # print(dh, dw)
-                sh = 0
-                for i in range(h // dh):
-                    eh = sh + dh
-                    eh = min(eh, h)
-                    sw = 0
-                    for j in range(w // dw):
-                        ew = sw + dw
-                        ew = min(ew, w)
-                        patches.append(xtensor[:, sh:eh, sw:ew])
-
-                        # print(sh, eh, sw, ew)
-                        sw = ew
-                    sh = eh
-
-                random.shuffle(patches)
-
-                start = 0
-                imgs = []
-                for i in range(self.k):
-                    end = start + self.k
-                    imgs.append(torch.cat(patches[start:end], dim=1))
-                    start = end
-                img = torch.cat(imgs, dim=2)
-                return img
-
-        if Transform_Type == 'Saturation':
-            Extra_Transform = Saturation_Transform(saturation_level=Level)
-        elif Transform_Type == 'Patch':
-            Extra_Transform = Patch_Transform(k=Level)
-        else:
-            raise RuntimeError('Unknown Transformation')
+        # class Saturation_Transform(object):
+        #     '''
+        #     for each pixel v: v' = sign(2v - 1) * |2v - 1|^{2/p}  * 0.5 + 0.5
+        #     then clip -> (0, 1)
+        #     '''
+        # 
+        #     def __init__(self, saturation_level=2.0):
+        #         self.p = saturation_level
+        # 
+        #     def __call__(self, img):
+        #         ones = torch.ones_like(img)
+        #         # print(img.size(), torch.max(img), torch.min(img))
+        #         ret_img = torch.sign(2 * img - ones) * torch.pow(torch.abs(2 * img - ones), 2.0 / self.p)
+        # 
+        #         ret_img = ret_img * 0.5 + ones * 0.5
+        # 
+        #         ret_img = torch.clamp(ret_img, 0, 1)
+        # 
+        #         return ret_img
+        # 
+        # class Patch_Transform(object):
+        #     def __init__(self, k=2):
+        #         self.k = k
+        # 
+        #     def __call__(self, xtensor: torch.Tensor):
+        #         '''
+        #         X: torch.Tensor of shape(c, h, w)   h % self.k == 0
+        #         :param xtensor:
+        #         :return:
+        #         '''
+        #         patches = []
+        #         # K==0则不分割数据
+        #         if self.k == 0:
+        #             return xtensor
+        # 
+        #         c, h, w = xtensor.size()
+        #         dh = h // self.k
+        #         dw = w // self.k
+        # 
+        #         # print(dh, dw)
+        #         sh = 0
+        #         for i in range(h // dh):
+        #             eh = sh + dh
+        #             eh = min(eh, h)
+        #             sw = 0
+        #             for j in range(w // dw):
+        #                 ew = sw + dw
+        #                 ew = min(ew, w)
+        #                 patches.append(xtensor[:, sh:eh, sw:ew])
+        # 
+        #                 # print(sh, eh, sw, ew)
+        #                 sw = ew
+        #             sh = eh
+        # 
+        #         random.shuffle(patches)
+        # 
+        #         start = 0
+        #         imgs = []
+        #         for i in range(self.k):
+        #             end = start + self.k
+        #             imgs.append(torch.cat(patches[start:end], dim=1))
+        #             start = end
+        #         img = torch.cat(imgs, dim=2)
+        #         return img
+        # 
+        # if Transform_Type == 'Saturation':
+        #     Extra_Transform = Saturation_Transform(saturation_level=Level)
+        # elif Transform_Type == 'Patch':
+        #     Extra_Transform = Patch_Transform(k=Level)
+        # else:
+        #     raise RuntimeError('Unknown Transformation')
 
         data_tf_test = transforms.Compose([
             transforms.ToTensor(),
             # Saturation_Transform(saturation_level=1024.),
             # Patch_Transform(k=4),
-            Extra_Transform
+            # Extra_Transform
         ])
 
         data_tf_mnist = transforms.Compose([
@@ -204,7 +204,8 @@ class Forward():
                 return adv_images, batch_labels
 
     @torch.no_grad()
-    def calculate_acc_and_mutual_info(self, Model, Keep_Clean):
+    def calculate_acc_and_mutual_info(self, Model, Transform_Type, Level, Keep_Clean):
+        import random
         # 这里的epoch_i没必要指定，因为epochi就是列表当中的最后一个元素
         # a = list[-1]就是最后一个元素
         Model.eval()
@@ -217,6 +218,76 @@ class Forward():
         label_chunk = None
         layer_activation_chunk = None
 
+        def Saturation_Transform(batch_images, level=2):
+            '''
+            for each pixel v: v' = sign(2v - 1) * |2v - 1|^{2/p}  * 0.5 + 0.5
+            then clip -> (0, 1)
+            '''
+            p = level * 1.0
+            ones = torch.ones_like(batch_images)
+            # print(img.size(), torch.max(img), torch.min(img))
+            ret_img = torch.sign(2 * batch_images - ones) * torch.pow(torch.abs(2 * batch_images - ones), 2.0 / p)
+
+            ret_img = ret_img * 0.5 + ones * 0.5
+
+            ret_img = torch.clamp(ret_img, 0, 1)
+
+            return ret_img
+
+        def Patch_Transform(batch_images, level=2):
+            '''
+            X: torch.Tensor of shape(c, h, w)   h % self.k == 0
+            :param images:
+            :return:
+            '''
+            # K==0则不分割数据
+            k = level
+            if k == 0:
+                return batch_images
+
+            b, c, h, w = batch_images.size()
+
+            for idx in range(b):
+                patches = []
+                images = batch_images[idx]
+
+                dh = h // k
+                dw = w // k
+
+                # print(dh, dw)
+                sh = 0
+                for i in range(h // dh):
+                    eh = sh + dh
+                    eh = min(eh, h)
+                    sw = 0
+                    for j in range(w // dw):
+                        ew = sw + dw
+                        ew = min(ew, w)
+                        patches.append(images[:, sh:eh, sw:ew])
+
+                        # print(sh, eh, sw, ew)
+                        sw = ew
+                    sh = eh
+
+                random.shuffle(patches)
+
+                start = 0
+                imgs = []
+                for i in range(k):
+                    end = start + k
+                    imgs.append(torch.cat(patches[start:end], dim=1))
+                    start = end
+                img = torch.cat(imgs, dim=2)
+                batch_images[idx] = img
+            return batch_images
+
+        if Transform_Type == 'Saturation':
+            Extra_Transform = Saturation_Transform
+        elif Transform_Type == 'Patch':
+            Extra_Transform = Patch_Transform
+        else:
+            raise RuntimeError('Unknown Transformation')
+
         if Keep_Clean:
             estimator = self.std_estimator
         else:
@@ -224,7 +295,11 @@ class Forward():
 
         for i in range(self.Forward_Repeat):
 
-            images, labels = self.get_clean_or_adv_image(Model, Keep_Clean)
+            batch_images, labels = self.get_clean_or_adv_image(Model, Keep_Clean)
+            '''
+            对正常样本和对抗样本进行变换
+            '''
+            images = Extra_Transform(batch_images, Level)
 
             # labels = labels.to(Device)
             # # print('std_test_size', images.size(0))
@@ -310,11 +385,18 @@ class Forward():
             Level_L = None
 
         for level in Level_L:
+            # TODO: 这里的工作流程需要变动一下, 应该是先产生样本, 再对样本进行切片和饱和度调整,
             # 设定好特定的装载程序之后前，在验证集上计算干净样本和对抗样本互信息并且计算准确率
-            self.Test_Loader = self.get_test_loader(Transform_Type=Transform_Type, Level=level)
+            self.Test_Loader = self.get_test_loader()
 
-            level_i_test_clean_acc, level_i_test_clean_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=True)
-            level_i_test_adv_acc, level_i_test_adv_loss = self.calculate_acc_and_mutual_info(Model, Keep_Clean=False)
+            level_i_test_clean_acc, level_i_test_clean_loss = self.calculate_acc_and_mutual_info(Model,
+                                                                                                 Transform_Type=Transform_Type,
+                                                                                                 Level=level,
+                                                                                                 Keep_Clean=True)
+            level_i_test_adv_acc, level_i_test_adv_loss = self.calculate_acc_and_mutual_info(Model,
+                                                                                             Transform_Type=Transform_Type,
+                                                                                             Level=level,
+                                                                                             Keep_Clean=False)
             # 在验证集上的干净样本准确率，对抗样本准确率,loss
             test_clean_acc_L.append(level_i_test_clean_acc)
             test_adv_acc_L.append(level_i_test_adv_acc)
@@ -651,18 +733,19 @@ class Forward():
         axs[0][0].set_ylabel('Loss')
 
         # axs[0][0].plot(Epochs, st_saturation_mi_loss_acc['train_loss'], label='train_loss')
+        # 颜色表示是ST还是AT, 实线和虚线表示正常样本还是对抗样本, marker 表示是 Saturation 还是 Patch
         axs[0][0].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none',
+                       linestyle='-', c='C0', marker='x', markerfacecolor='none',
                        label='ST clean test')
         axs[0][0].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle=':', c='C0', marker='P', markerfacecolor='none',
+                       linestyle=':', c='C0', marker='x', markerfacecolor='none',
                        label='ST adv test')
 
         axs[0][0].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle='-', c='C1', marker='o', markerfacecolor='none',
+                       linestyle='-', c='C1', marker='x', markerfacecolor='none',
                        label='AT clean test')
         axs[0][0].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none',
+                       linestyle=':', c='C1', marker='x', markerfacecolor='none',
                        label='AT adv test')
         axs[0][0].legend()
 
@@ -671,56 +754,49 @@ class Forward():
         # axs[0][1].set_title('Standard training')
         # axs[0][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
         axs[0][1].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='st test_clean_acc')
+                       linestyle='-', c='C0', marker='x', markerfacecolor='none', markersize=7)
         axs[0][1].plot(Saturation_L, st_saturation_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='st test_adv_acc')
+                       linestyle=':', c='C0', marker='x', markerfacecolor='none', markersize=7)
 
         axs[0][1].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='at test_clean_acc')
+                       linestyle='-', c='C1', marker='x', markerfacecolor='none', markersize=7)
         axs[0][1].plot(Saturation_L, at_saturation_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='at test_adv_acc')
+                       linestyle=':', c='C1', marker='x', markerfacecolor='none', markersize=7)
+
         # ------------- Patch AT Loss and Accuracy Detail -------------------------
         axs[0][2].set_xlabel('Patch level')
         axs[0][2].set_ylabel('Loss')
         # axs[0][2].set_title('Adversarial training')
         # axs[0][0].plot(Epochs, st_saturation_mi_loss_acc['train_loss'], label='train_loss')
         axs[0][2].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='st test_clean_loss')
+                       linestyle='-', c='C0', marker='s', markerfacecolor='none', markersize=7,
+                       label='ST clean test')
         axs[0][2].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='st test_adv_loss')
+                       linestyle=':', c='C0', marker='s', markerfacecolor='none', markersize=7,
+                       label='ST adv test')
 
         axs[0][2].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_clean_loss'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='st test_clean_loss')
+                       linestyle='-', c='C1', marker='s', markerfacecolor='none', markersize=7,
+                       label='AT clean test')
         axs[0][2].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_adv_loss'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='st test_adv_loss')
+                       linestyle=':', c='C1', marker='s', markerfacecolor='none', markersize=7,
+                       label='AT adv test')
 
-        # axs[0][2].legend()
+        axs[0][2].legend()
         # -------------------
         axs[0][3].set_xlabel('Patch level')
         axs[0][3].set_ylabel('Accuracy (%)')
         # axs[0][3].set_title('Adversarial training')
         # axs[0][1].plot(Epochs, analytic_data['train_acc'], label='train_acc')
         axs[0][3].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle='-', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='st test_clean_acc')
+                       linestyle='-', c='C0', marker='s', markerfacecolor='none', markersize=7)
         axs[0][3].plot(Patch_L, st_patch_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle='-', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='st test_adv_acc')
+                       linestyle=':', c='C0', marker='s', markerfacecolor='none', markersize=7)
 
         axs[0][3].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_clean_acc'],
-                       linestyle=':', c='C0', marker='o', markerfacecolor='none', markersize=7,
-                       label='st test_clean_acc')
+                       linestyle='-', c='C1', marker='s', markerfacecolor='none', markersize=7)
         axs[0][3].plot(Patch_L, at_patch_mi_loss_acc['loss_acc']['test_adv_acc'],
-                       linestyle=':', c='C1', marker='P', markerfacecolor='none', markersize=7,
-                       label='st test_adv_acc')
+                       linestyle=':', c='C1', marker='s', markerfacecolor='none', markersize=7)
         # axs[0][1].legend()
 
         # 初始化 xlabel, y_label
@@ -769,16 +845,17 @@ class Forward():
                 # axs[1].legend(line_legends, ['st_saturation_std', 'st_saturation_adv'])
 
                 axs[0].plot(Layer_Name, std_I_TX_level_i,
-                            linestyle='-',  # 是 saturation 还是 Patch
+                            linestyle='-',  # 对抗样本还是普通样本
                             color=c,  # level 水平
-                            marker=marker_style,  # 对抗样本还是普通样本
+                            marker=marker_style,  # 是 saturation 还是 Patch
                             markerfacecolor='none',
                             linewidth=1,
                             label='%s %s(%s)' % ('std', transform_type, level_i)
                             )
                 axs[0].plot(Layer_Name, adv_I_TX_level_i,
+                            linestyle=':',
                             color=c, marker=marker_style, markerfacecolor='none',
-                            linestyle=':', linewidth=1,
+                            linewidth=1,
                             label='%s %s(%s)' % ('adv', transform_type, level_i)
                             )
                 # 设定 x 轴坐标范围
@@ -864,6 +941,7 @@ class Forward():
         import matplotlib
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: ticks_2_labels[pos])  # print(x,pos)
         fig.colorbar(sm, ax=axs[1][3], ticks=[i for i in range(Level_Num_Max)], format=fmt)
+        # orientation='horizontal'
 
         # fig.suptitle(title)
         # fig.colorbar(sm, ax=axs, label='Epoch')
