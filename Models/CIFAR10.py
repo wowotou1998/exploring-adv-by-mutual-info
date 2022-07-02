@@ -56,6 +56,12 @@ class BasicBlock(nn.Module):
         # # 这个torch.add 很重要
         # return torch.add(x if self.In_equal_Out else self.convShortcut(x), out)
         # -------------------------
+        """
+        x->bn1->relu1->y->conv1->->bn2->relu2->conv2->out
+                       |                              |
+                       +------->conv(y)---------------+
+        """
+
         y = self.relu1(self.bn1(x))
 
         if self.In_equal_Out:
@@ -143,8 +149,6 @@ class WideResNet(nn.Module):
         out = self.relu(self.bn1(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.nChannels)
-
-        self.train()
 
         return self.fc(out)
 
