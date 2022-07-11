@@ -202,11 +202,12 @@ class WideResNet_3_96_96(nn.Module):
         out = out.view(out.size(0), -1)
         # print('out.shape', out.shape)
 
-        self.train()
+        # self.train()
 
         return self.fc(out)
 
 
 if __name__ == '__main__':
-    a = WideResNet_3_64_64(depth=1 * 6 + 4, num_classes=200, widen_factor=1, dropRate=0.0)
-    b = a(torch.rand((1, 3, 64, 64)))
+    a = WideResNet_3_96_96(depth=1 * 6 + 4, num_classes=10, widen_factor=1, dropRate=0.0)
+    b = a(torch.rand((1, 3, 96, 96)))
+    print(b)
