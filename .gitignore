@@ -10,7 +10,7 @@ results_pdf/
 *.png
 *.jpg
 *.pkl
-#*.pptx
+*.pptx
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
