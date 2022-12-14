@@ -586,7 +586,6 @@ if __name__ == '__main__':
     # load_model(Model, './Checkpoint/%s_adv.pth' % Model_Name)
     # Trainer_0.only_forward(Model, Enable_Adv_Training=True)
 
-
 """
     def plot_mutual_info_2(epoch_MI_hM_X, epoch_MI_hM_Y, title):
         sm = plt.cm.ScalarMappable(cmap='gnuplot', norm=plt.Normalize(vmin=0, vmax=Std_Epoch_Num))
