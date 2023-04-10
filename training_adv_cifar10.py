@@ -4,7 +4,7 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import ModelSet
+
 from pylab import mpl
 import datetime
 from MI_estimator import mutual_info_estimator
@@ -251,8 +251,8 @@ def adv_training():
                 'epoch_test_acc': epoch_test_acc,
                 'epoch': epoch,
             }
-            if not os.path.isdir('./Checkpoint'):
-                os.mkdir('./Checkpoint')
+            if not os.path.isdir('Checkpoint'):
+                os.mkdir('Checkpoint')
             torch.save(state, './Checkpoint/{}.pth'.format(Model_Name))
             best_test_acc = epoch_test_acc
         else:

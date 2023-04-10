@@ -170,8 +170,8 @@ def training(model,
                 'test_acc': test_acc,
                 'epoch': epoch,
             }
-            if not os.path.isdir('./Checkpoint'):
-                os.mkdir('./Checkpoint')
+            if not os.path.isdir('Checkpoint'):
+                os.mkdir('Checkpoint')
             torch.save(state, './Checkpoint/{}.pth'.format(model_name))
             best_test_acc = test_acc
         else:

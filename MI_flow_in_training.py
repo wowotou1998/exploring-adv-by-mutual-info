@@ -1,13 +1,5 @@
-import matplotlib.pyplot as plt
-import numpy as np
 from torch import optim, nn
-import os
-import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-import ModelSet
-from pylab import mpl
-import datetime
+from torchvision import datasets
 from MI_estimator import mutual_info_estimator
 from utils import *
 from torchattacks import PGD
@@ -64,7 +56,6 @@ class Trainer():
     def get_train_test_loader(self):
         # 全局取消证书验证
         import ssl
-        import random
         ssl._create_default_https_context = ssl._create_unverified_context
 
         data_tf_3_32_32 = transforms.Compose([
@@ -111,7 +102,7 @@ class Trainer():
                                            download=True)
             test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=tensor_transform)
         else:
-            raise RuntimeError('invaild data set')
+            raise Exception('invaild data set')
 
         Train_Loader = DataLoader(dataset=train_dataset, batch_size=self.Train_Batch_Size, shuffle=True)
         Test_Loader = DataLoader(dataset=test_dataset, batch_size=self.Forward_Size, shuffle=True)
@@ -529,10 +520,9 @@ if __name__ == '__main__':
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    from torchvision.models import *
-    from Models.MNIST import FC_Sigmoid, LeNet_1_28_28, FC_2
-    from Models.CIFAR10 import LeNet_3_32_32, WideResNet, VGG_s, RestNet18, net_cifar10
-    from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
+    from Models.MNIST import LeNet_1_28_28, FC_2
+    from Models.CIFAR10 import LeNet_3_32_32, WideResNet
+    from Models.Tiny_ImageNet import WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
@@ -558,8 +548,8 @@ if __name__ == '__main__':
     # parser.add_argument('--Data_Set', default='STL10', type=str, help='The Data_Set.')
     parser.add_argument('--Data_Set', default='MNIST', type=str, help='The Data_Set.')
 
-    parser.add_argument('--Eps', default=45 / 255, type=float, help='perturbation magnitude')
-    parser.add_argument('--Alpha', default=8 / 255, type=float, help='the perturbation in each step')
+    parser.add_argument('--Eps', default=45. / 255, type=float, help='perturbation magnitude')
+    parser.add_argument('--Alpha', default=8. / 255, type=float, help='the perturbation in each step')
     parser.add_argument('--Step', default=7, type=int, help='the step')
 
     parser.add_argument('--Std_Epoch_Num', default=200, type=int, help='The epochs.')

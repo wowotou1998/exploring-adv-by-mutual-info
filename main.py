@@ -1,7 +1,7 @@
 from torch import optim, nn
 import matplotlib.pyplot as plt
-from simple_bin import bin_calc_information2
-from MINE import calculate_MI_MINE
+from lab8.MI_estimators.simple_bin import bin_calc_information2
+from lab8.some_test.MINE import calculate_MI_MINE
 
 
 def cancel_hook(handle_list):
@@ -77,7 +77,7 @@ handle_list = []
 layer_names = []
 layer_activations = []
 
-from pytorch_kde import *
+from lab8.MI_estimators.pytorch_kde import *
 import torch.nn.functional as F
 
 

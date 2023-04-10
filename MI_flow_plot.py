@@ -1,14 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from pylab import mpl
 import datetime
-from utils import *
+from lab8.utils import *
 import pickle
 from matplotlib.lines import Line2D
-from matplotlib.markers import MarkerStyle
 import math
 import torch
-import torch.nn.functional as F
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 

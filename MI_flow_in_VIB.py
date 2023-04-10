@@ -1,26 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import time
 from collections import defaultdict
 
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
 import torch.utils.data as data_utils
 
-import matplotlib.pyplot as plt
-import numpy as np
-from torch import optim, nn
-import os
-import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-import ModelSet
-from pylab import mpl
-import datetime
-from MI_estimator import mutual_info_estimator
-from utils import *
-from torchattacks import PGD
+from torch import nn
+from lab8.utils import *
 import pickle
 import torch.nn.functional as F
 
@@ -408,12 +392,10 @@ class Train_VIB(object):
 
     def plot_data(self, Enable_Adv_Training=False):
         import matplotlib.pyplot as plt
-        import numpy as np
         from pylab import mpl
         import datetime
         import pickle
         from matplotlib.lines import Line2D
-        import math
 
         # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
         # mpl.rcParams['font.sans-serif'] = ['Arial']
@@ -523,7 +505,7 @@ if __name__ == '__main__':
     #
     # from torchvision.datasets import MNIST
     #
-    # from torch.utils.data import TensorDataset, Dataset, DataLoader
+    # from torch.some_test.data import TensorDataset, Dataset, DataLoader
     #
     # import numpy as np
     # import tqdm

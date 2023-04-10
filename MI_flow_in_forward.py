@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from torch import optim, nn
-import os
-import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import ModelSet
 from pylab import mpl
 import datetime
 from MI_estimator import mutual_info_estimator
@@ -47,7 +42,6 @@ class Forward():
     def get_test_loader(self):
         # 全局取消证书验证
         import ssl
-        import random
         ssl._create_default_https_context = ssl._create_unverified_context
 
         # class Saturation_Transform(object):
@@ -447,7 +441,6 @@ class Forward():
         from matplotlib.lines import Line2D
         line_legends = [Line2D([0], [0], color='purple', linewidth=1, linestyle='-', marker='o'),
                         Line2D([0], [0], color='purple', linewidth=1, linestyle='--', marker='^')]
-        import math
         Is_Adv_Training = 'Adv_Train' if Enable_Adv_Training else 'Std_Train'
         Model_Name = self.Model_Name
         with open('./Checkpoint/%s/%s/mi_loss_acc_%s.pkl' % (Model_Name, Transform_Type, Is_Adv_Training), 'rb') as f:
@@ -662,7 +655,6 @@ class Forward():
 
         from matplotlib.lines import Line2D
 
-        import math
         Is_Adv_Training = 'Std_Train'
         Model_Name = self.Model_Name
         Transform_Type = 'Saturation'
@@ -953,7 +945,7 @@ class Forward():
         print("Work has done!")
 
     def plot_data_by_layer_index(self, Transform_Type, Enable_Adv_Training):
-        from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+        from matplotlib.ticker import FormatStrFormatter
         # 用label和color列表生成mpatches.Patch对象，它将作为句柄来生成legend patches = [mpatches.Patch(linestyle=line_styles[i],
         # label="{:s}".format(labels[i])) for i in range(len(line_styles))]
         from matplotlib.lines import Line2D
@@ -1232,10 +1224,8 @@ if __name__ == '__main__':
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    from torchvision.models import *
-    from Models.MNIST import FC_Sigmoid, Net_mnist, FC_2
-    from Models.CIFAR10 import LeNet_3_32_32, WideResNet, VGG_s, RestNet18, net_cifar10
-    from Models.Tiny_ImageNet import WideResNet_3_64_64, WideResNet_3_96_96
+    from Models.CIFAR10 import WideResNet
+    from Models.Tiny_ImageNet import WideResNet_3_96_96
     import argparse
 
     Model_dict = {}
