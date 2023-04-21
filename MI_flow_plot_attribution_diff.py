@@ -125,9 +125,11 @@ def plot_attributions(net, image, label, suptitle='suptitle'):
 
     num = 4
     fig, axes = plt.subplots(1, num, figsize=(2 * num, 2), layout='constrained', )
-    fig.suptitle(suptitle)
+    # fig.suptitle(suptitle)
 
     for i in range(num):
+        if i == 0:
+            axes[i].set_ylabel(suptitle, fontsize=16)
         axes[i].set_xticks([])
         axes[i].set_yticks([])
 
