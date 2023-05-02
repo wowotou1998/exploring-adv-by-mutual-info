@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pylab import mpl
 import datetime
-from lab8.utils import *
+from utils import *
 import pickle
 from matplotlib.lines import Line2D
 import math

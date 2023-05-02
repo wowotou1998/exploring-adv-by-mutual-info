@@ -1,8 +1,8 @@
 import numpy as np
 import torch.nn.functional as F
 import torch
-from lab8.MI_estimators.simple_bin import bin_calc_information2
-from lab8.MI_estimators.pytorch_kde import kde_multivariate_gauss_entropy, entropy_estimator_kl_simple, entropy_estimator_bd
+from MI_estimators.simple_bin import bin_calc_information2
+from MI_estimators.pytorch_kde import kde_multivariate_gauss_entropy, entropy_estimator_kl_simple, entropy_estimator_bd
 
 """
 此处注意，
