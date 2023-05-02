@@ -74,11 +74,11 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     # subplot2grid, size = （行,列）, 块起始点坐标
     # grid_size = (4, Layer_Num)
     Fig_Size = (6, 10)
-    fig = plt.figure(figsize=(Fig_Size[1], Fig_Size[0]), constrained_layout=True)
-    spec = fig.add_gridspec(4, Layer_Num)
+    fig1 = plt.figure(figsize=(Fig_Size[1], Fig_Size[0]), constrained_layout=True)
+    spec = fig1.add_gridspec(4, Layer_Num)
 
     # -------------------------------------------Loss and Accuracy Detail---------------------
-    ax00 = fig.add_subplot(spec[0, 0])
+    ax00 = fig1.add_subplot(spec[0, 0])
     ax00.set_xlabel('Epochs')
     ax00.set_ylabel('Loss')
     ax00.plot(Epochs, analytic_data['train_loss'], label='Train set')
@@ -87,7 +87,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     # ax00.legend(prop={'size': 13})
     ax00.legend(prop={'size': 10})
     # -------------------
-    ax01 = fig.add_subplot(spec[0, 1])
+    ax01 = fig1.add_subplot(spec[0, 1])
     ax01.set_xlabel('Epochs')
     ax01.set_ylabel('Accuracy (%)')
     ax01.plot(Epochs, analytic_data['train_acc'], label='Train set')
@@ -97,14 +97,14 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     ax01.legend(prop={'size': 10})
 
     # -------------------------------------------overlook by Upper mutual info-------------------------
-    ax02 = fig.add_subplot(spec[0, 2])
+    ax02 = fig1.add_subplot(spec[0, 2])
     ax02.set_xlabel('Layer index')
     ax02.set_ylabel(r'$I(T;X)$' + ' (bits)')
     ax02.set_title('The I(T;X) lower bound')
     # ax02.legend(line_legends, ['Clean', 'Adv'], prop={'size': 13})
     ax02.legend(line_legends, ['Clean', 'Adv'])
 
-    ax03 = fig.add_subplot(spec[0, 3])
+    ax03 = fig1.add_subplot(spec[0, 3])
     ax03.set_xlabel('Layer index')
     ax03.set_ylabel(r'$I(T;Y)$' + ' (bits)')
     ax03.set_title('The I(T;Y) lower bound')
@@ -120,7 +120,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         ax03.plot(Layer_Name, adv.epoch_MI_hM_Y_lower[i], color=s_cmap_adv.to_rgba(i + 1), marker='+')
 
     # -------------------------------------------mutual information spilt by Layer---------------------
-    def axs_plot(fig, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type, Row_i):
+    def axs_plot(fig1, std_I_TX, std_I_TY, adv_I_TX, adv_I_TY, Std_Epoch_Num, MI_Type, Row_i):
         std_I_TX = np.array(std_I_TX)
         std_I_TY = np.array(std_I_TY)
         adv_I_TX = np.array(adv_I_TX)
@@ -135,7 +135,7 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
         i_ty_max = math.ceil(max(np.max(std_I_TY), np.max(adv_I_TY))) + 0.5
 
         for layer_i in range(Layer_Num):
-            ax = fig.add_subplot(spec[Row_i, layer_i])
+            ax = fig1.add_subplot(spec[Row_i, layer_i])
 
             # 最左侧的plot设置 y_label
             # 最下面的plot设置 x_label
@@ -180,24 +180,24 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
 
             # 设置 color_bar
             if layer_i == (Layer_Num - 1) and Row_i == 1:
-                fig.colorbar(s_cmap_std, ax=ax, ticks=[0, 100, 200], label='ST epoch')
+                fig1.colorbar(s_cmap_std, ax=ax, ticks=[0, 100, 200], label='ST epoch')
             if layer_i == (Layer_Num - 1) and Row_i == 3:
-                fig.colorbar(s_cmap_adv, ax=ax, ticks=[0, 100, 200], label='AT epoch')
+                fig1.colorbar(s_cmap_adv, ax=ax, ticks=[0, 100, 200], label='AT epoch')
 
     # std/adv Upper
-    axs_plot(fig,
+    axs_plot(fig1,
              std.epoch_MI_hM_X_upper, std.epoch_MI_hM_Y_upper,
              adv.epoch_MI_hM_X_upper, adv.epoch_MI_hM_Y_upper,
              Std_Epoch_Num, MI_Type='Upper', Row_i=1
              )
     # std/adv Lower
-    axs_plot(fig,
+    axs_plot(fig1,
              std.epoch_MI_hM_X_lower, std.epoch_MI_hM_Y_lower,
              adv.epoch_MI_hM_X_lower, adv.epoch_MI_hM_Y_lower,
              Std_Epoch_Num, MI_Type='Lower', Row_i=2
              )
     # std/adv Binning
-    axs_plot(fig,
+    axs_plot(fig1,
              std.epoch_MI_hM_X_bin, std.epoch_MI_hM_Y_bin,
              adv.epoch_MI_hM_X_bin, adv.epoch_MI_hM_Y_bin,
              Std_Epoch_Num, MI_Type='Binning', Row_i=3
@@ -205,13 +205,14 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     title = "%s(%s),LR(%.3f),Upper/Lower/Binning,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
-    # fig.suptitle(title)
+    # fig1.suptitle(title)
     # plt.show()
 
-    fig.savefig('mi_plane_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
+    # fig1.savefig('mi_plane_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
     # datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-    # -------------------------------------------Mutual Information Detail---------------------
+    # -------------------------------------------Fig2-------------------------------------------
+    # ---------------Mutual Information Detail---------------
     # 设定坐标范围
     # i_tx_min = math.floor(min(np.min(std_I_TX), np.min(adv_I_TX))) - 0.5
     # i_tx_max = math.ceil(max(np.max(std_I_TX), np.max(adv_I_TX)))
@@ -266,10 +267,10 @@ def plot_mutual_info_scatter(Model_Name, Enable_Adv_Training):
     title = "%s(%s),LR(%.3f),MI Lower Bound detail,Clean(Adv),Sample_N(%d),%s" % (
         Model_Name, Activation_F, Learning_Rate, Forward_Repeat * Forward_Size, Is_Adv_Training
     )
-    # fig2.suptitle(title)
-    # plt.show()
-    # fig.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
-    fig.savefig('mi_plane_detail_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
+    fig2.suptitle(title)
+    plt.show()
+    # fig2.savefig('mutual_info_detail_%s_%s.pdf' % (Model_Name, Is_Adv_Training))
+    # fig2.savefig('mi_plane_detail_%s_%s.pdf' % (Model_Name.lower(), Is_Adv_Training.lower()))
     print("Work has done!")
 
 
@@ -688,7 +689,7 @@ if __name__ == '__main__':
 
     # mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['font.sans-serif'] = ['Arial']
-    mpl.rcParams['backend'] = 'agg'
+    # mpl.rcParams['backend'] = 'agg'
     # mpl.rcParams["font.size"] = 12
     mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     # mpl.rcParams['savefig.dpi'] = 400  # 保存图片分辨率
@@ -699,8 +700,8 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='plot arguments')
-    parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
-    # parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
+    # parser.add_argument('--Model_Name', default='LeNet_MNIST', type=str, help='The Model_Name.')
+    parser.add_argument('--Model_Name', default='WideResNet_STL10', type=str, help='The Model_Name.')
     # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
