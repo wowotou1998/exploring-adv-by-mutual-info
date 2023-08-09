@@ -682,6 +682,9 @@ def plot_transfer_matrix(Model_Name, Enable_Adv_Training):
 
 
 if __name__ == '__main__':
+    import os
+
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     import matplotlib
 
     # matplotlib.use('agg')
@@ -705,7 +708,7 @@ if __name__ == '__main__':
     # parser.add_argument('--Model_Name', default='WideResNet_CIFAR10', type=str, help='The Model_Name.')
     args = parser.parse_args()
     Model_Name = args.Model_Name
-    # plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
+    plot_transfer_matrix(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=False)
     plot_mutual_info_scatter(Model_Name, Enable_Adv_Training=True)
     # plot_mutual_info(Model_Name, Enable_Adv_Training=True)
