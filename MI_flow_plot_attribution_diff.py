@@ -45,11 +45,11 @@ def get_test_loader(Data_Set):
     if Data_Set == 'CIFAR10':
         # train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
         #                                  download=True)
-        test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_test)
+        test_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=False, transform=data_tf_test, download=True)
     elif Data_Set == 'STL10':
         # train_dataset = datasets.CIFAR10(root='./DataSet/CIFAR10', train=True, transform=data_tf_cifar10,
         #                                  download=True)
-        test_dataset = datasets.STL10(root='./DataSet/STL10', split='test', transform=data_tf_test)
+        test_dataset = datasets.STL10(root='./DataSet/STL10', split='test', transform=data_tf_test, download=True)
     elif Data_Set == 'MNIST':
         # train_dataset = datasets.MNIST(root='./DataSet/MNIST', train=True, transform=data_tf_mnist, download=True)
         test_dataset = datasets.MNIST(root='./DataSet/MNIST', train=False, transform=data_tf_mnist)
