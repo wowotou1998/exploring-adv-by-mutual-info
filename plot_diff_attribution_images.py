@@ -102,7 +102,7 @@ def plot_attributions(net, image, label, suptitle='suptitle'):
         attr_min, attr_max = attribution_abs.min().item(), attribution_abs.max().item()
         attributions_abs_img = (attribution_abs - attr_min) / \
                                (attr_max - attr_min)
-        return attributions_abs_img[0].cpu().detach().numpy().transpose(1, 2, 0)
+        return 1. - attributions_abs_img[0].cpu().detach().numpy().transpose(1, 2, 0)
 
     saliency = Saliency(net)
     NT = NoiseTunnel(saliency)
@@ -124,7 +124,7 @@ def plot_attributions(net, image, label, suptitle='suptitle'):
     s5 = overlay_mask(to_pil_image(image[0]), to_pil_image(fused_cam[0].squeeze(0), mode='F'), alpha=0.5)
 
     num = 4
-    fig, axes = plt.subplots(1, num, figsize=(2 * num, 2), layout='constrained', )
+    fig, axes = plt.subplots(1, num, figsize=(2 * num, 2.2), layout='constrained', )
     # fig.suptitle(suptitle)
 
     for i in range(num):
@@ -164,6 +164,10 @@ def plot_attributions(net, image, label, suptitle='suptitle'):
 
 
 if __name__ == '__main__':
+    import os
+
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
     mpl.rcParams['font.sans-serif'] = ['Times New Roman']
     mpl.rcParams['mathtext.fontset'] = 'stix'
     # 解决保存图像是负号'-'显示为方块的问题
@@ -253,7 +257,7 @@ if __name__ == '__main__':
         else:
             print('wrong prediction')
 
-        if sample_num >= 3:
+        if sample_num >= 1:
             break
 
     # select_a_sample_to_plot(

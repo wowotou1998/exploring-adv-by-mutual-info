@@ -329,3 +329,11 @@ class LeNet_cifar10(nn.Module):
 # net2 = Net_mnist()
 # print(net1(x1).size())
 # print(net2(x2).size())
+
+def function(data=[]):
+    data.append(1)
+    return data
+function()
+function()
+function()
+print(function())
